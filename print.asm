@@ -17,30 +17,36 @@ print_str_end:
 ; print hex value of bx register
 print_register:
     pusha
+    mov al, '0'
+    call print_char
+    mov al, 'x'
+    call print_char
+    mov dx, 0    
+print_register_step:    
     mov cx, bx
-    and cx, 0x000f
+    and cx, 0xf000
+    shr cx, 12
     cmp cx, 9
     jle print_numerical_char
     ; print A-F
-    sub cx, 9
+    sub cx, 10
     add cx, 0x41
     mov al, cl
     call print_char
-    jmp print_register_end
+    jmp print_numerical_char_end
 print_numerical_char:
     ; print 0-9
     add cx, 0x30
     mov al, cl
     call print_char
-    jmp print_register_end
-print_register_end:
+    jmp print_numerical_char_end
+print_numerical_char_end:
+    shl bx, 4
+    add dx, 1
+    cmp dx, 4    
+    jne print_register_step
     popa
     ret
-
-; reserve memory for register content printing
-register_string:
-    db "00 00"
-
 
 ; print new line
 print_nl:

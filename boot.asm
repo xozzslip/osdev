@@ -7,7 +7,7 @@ call print_nl
 call print_str
 call print_nl
 
-mov bx, 0x0004
+mov bx, 0x149F
 call print_register
 call print_nl
 
@@ -20,15 +20,17 @@ mov ch, 0 ; track number is zero, hopefully that track has a few sectors
 ; dl should be already set by BIOS
 mov dh, 0
 int 0x13
+cmp ah, 0 ; check for errros
 
-cmp ah, 0
-je loop
+mov bx, [0x9000 + 512 + 510]
+call print_register
 
+
+je loop  ; return
+
+; Error occured
 mov bx, disk_error_string
-call print_str 
-
-
-
+call print_str
 
 loop:
     jmp loop
