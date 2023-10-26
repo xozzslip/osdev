@@ -1,22 +1,22 @@
-; [org 0x7c00]
+[org 0x7c00]
 ; db 'X'
+mystring:
+    db 'ABCCCCCCA', 0
 
 mov ah, 0x0e
-
 mov bp, 0x8000
 mov sp, bp
 
-push 'Z'
-mov ah, 'Y'
-mov al, 'X'
-call print
-mov bh, ah
-mov al, bh
-call print
-pop bx
-mov al, bl
-call print
+mov bx, mystring
+call print_str
+call print_nl
+call print_str
+call print_nl
 
+
+
+; mov ax, [mystring]
+; call print_char
 
 
 loop:
