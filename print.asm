@@ -1,35 +1,46 @@
-; print string
+; print string, pass string by "mov bx, mystring"
 print_str:
     pusha    
     mov ah, 0x0e
 print_next_char:
     mov cx, [bx]
     cmp cl, 0
-    je print_return
+    je print_str_end
     mov al, cl    
     int 0x10
     add bx, 1
     jmp print_next_char
-print_return:
+print_str_end:
     popa
     ret
 
-; print hex
-print_str:
-    pusha    
-    mov bx, ax
-    mov ah, 0x0e
-print_next_char:
-    mov cx, [bx]
-    cmp cl, 0
-    je print_return
-    mov al, cl    
-    int 0x10
-    add bx, 1
-    jmp print_next_char
-print_return:
+; print hex value of bx register
+print_register:
+    pusha
+    mov cx, bx
+    and cx, 0x000f
+    cmp cx, 9
+    jle print_numerical_char
+    ; print A-F
+    sub cx, 9
+    add cx, 0x41
+    mov al, cl
+    call print_char
+    jmp print_register_end
+print_numerical_char:
+    ; print 0-9
+    add cx, 0x30
+    mov al, cl
+    call print_char
+    jmp print_register_end
+print_register_end:
     popa
     ret
+
+; reserve memory for register content printing
+register_string:
+    db "00 00"
+
 
 ; print new line
 print_nl:
