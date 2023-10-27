@@ -25,7 +25,6 @@ cmp ah, 0 ; check for errros
 mov bx, [0x9000 + 512 + 510]
 call print_register
 
-
 je loop  ; return
 
 ; Error occured
