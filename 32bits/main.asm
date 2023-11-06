@@ -24,7 +24,6 @@ print_something:
 [bits 32]
     ; mov ebx, 0xb8000 + 2 * (14 * 80 + 2)
     mov ebx, 0x000b88c4
-    
 
     mov eax, 0
     mov al, 'C'
@@ -32,7 +31,7 @@ print_something:
 
     mov [ds:ebx], eax
 
-[bits 16]    
+[bits 16]
 loop:
     jmp loop
 
