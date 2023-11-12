@@ -1,33 +1,50 @@
+C_FILES = $(wildcard kernel/*.c drivers/*.c)
+OBJ_FILES = $(patsubst %.c,%.o,${C_FILES})
+
 CC = ~/code/osdev/cross-compiler/i386-elf/bin/i386-elf-gcc
 LD = ~/code/osdev/cross-compiler/i386-elf/bin/i386-elf-ld
 GDB = ~/code/osdev/cross-compiler/i386-elf/bin/i386-elf-gdb
 
+run: os.bin
+	qemu-system-i386 -drive format=raw,file=os.bin
 
-run: out.bin
-	qemu-system-i386 -drive format=raw,file=out.bin
+os.bin: boot/boot.bin kernel/kernel.bin
+	cat $^ > $@
 
-debug: out.bin kernel.elf
-	qemu-system-i386 -s -drive format=raw,file=out.bin &
-	${GDB} -ex "target remote localhost:1234" -ex "symbol-file kernel.elf"
-
-boot.bin: boot.asm
-	nasm -f bin boot.asm -o boot.bin
-
-out.bin: boot.bin kernel.bin
-	cat boot.bin kernel.bin > out.bin
-
-kernel.bin: kernel_entry.o kernel.o
+kernel/kernel.bin: kernel/kernel_entry.o ${OBJ_FILES}
 	$(LD) $^ -o $@ -Ttext 0x1000 --oformat binary
 
+######
 # This is used for debugging
-kernel.elf: kernel_entry.o kernel.o
+kernel/kernel.elf: kernel/kernel_entry.o ${OBJ_FILES}
 	$(LD) $^ -o $@ -Ttext 0x1000
 
-kernel_entry.o: kernel_entry.asm
-	nasm -f elf kernel_entry.asm -o kernel_entry.o
+debug: os.bin kernel/kernel.elf
+	qemu-system-i386 -s -drive format=raw,file=os.bin &
+	${GDB} -ex "target remote localhost:1234" -ex "symbol-file kernel/kernel.elf"
+#######
 
-kernel.o: kernel.c
-	$(CC) -O0 -g -ffreestanding -c kernel.c -o kernel.o
+%.o: %.c
+	$(CC) -O0 -g -ffreestanding -c $< -o $@
+
+%.o: %.asm
+	nasm -f elf $< -o $@
+
+%.bin: %.asm
+	nasm -f bin $< -o $@
 
 clean:
-	rm -rf out.bin boot.bin kernel.bin kernel_entry.o kernel.o
+	rm -rf kernel/*.o kernel/*.bin
+
+# Rules to run OS on the host
+CC_HOST = /usr/bin/x86_64-pc-linux-gnu-gcc-13.2.1
+
+run_host: kernel.c
+	$(CC_HOST) -m32 -O0 -g kernel.c -o a.out
+	./a.out
+
+test_host: test.c
+	$(CC_HOST) -m32 -O0 -g test.c -o a.out
+	objdump -d -M intel ./a.out
+	./a.out
+
