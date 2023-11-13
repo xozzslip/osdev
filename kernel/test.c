@@ -1,7 +1,7 @@
 #include<stdio.h>
 
 int main() {
-    int a = 11;
-    int b = a << 8;
-    printf("b=%d\n", b);
+    char a = 11;
+    char b = 255;
+    printf("a=%d b=%d\n", a, b);
 }

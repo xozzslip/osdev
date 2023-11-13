@@ -2,7 +2,7 @@
     ; reading from disk
     mov bx, 0x1000 ; memory address where data will be loaded to
     mov ah, 2 ; int 0x13 command
-    mov al, 2 ; number of sectors to read (read two sectors)
+    mov al, 48 ; number of sectors to read (read 48 sectors, 24 kilobytes)
     mov cl, 2 ; sector number  (1-17 dec.) enumerated from 1!
     mov ch, 0 ; track number is zero (hopefully that track has a few sectors)
     ; dl should be already set by BIOS, it is a number of disk

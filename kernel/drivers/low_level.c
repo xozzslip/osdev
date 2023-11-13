@@ -48,9 +48,17 @@ void port_word_out(unsigned short port, unsigned short data) {
     );
 }
 
-void spin_wait() {
+void spin_wait_second() {
     int x = 0;
-        for (int i = 0; i < 10000000; i++) {
+        for (int i = 0; i < 100000000; i++) {
+        x += i;
+    }
+    return;
+}
+
+void spin_wait_milisecond() {
+    int x = 0;
+        for (int i = 0; i < 100000; i++) {
         x += i;
     }
     return;
