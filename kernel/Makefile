@@ -1,4 +1,5 @@
 C_FILES = $(wildcard kernel/*.c drivers/*.c)
+H_FILES = $(wildcard kernel/*.h drivers/*.h)
 OBJ_FILES = $(patsubst %.c,%.o,${C_FILES})
 
 CC = ~/code/osdev/cross-compiler/i386-elf/bin/i386-elf-gcc
@@ -7,6 +8,11 @@ GDB = ~/code/osdev/cross-compiler/i386-elf/bin/i386-elf-gdb
 
 run: os.bin
 	qemu-system-i386 -drive format=raw,file=os.bin
+
+build: os.bin
+
+disasm: kernel/kernel.elf
+	objdump -d -M intel $<
 
 os.bin: boot/boot.bin kernel/kernel.bin
 	cat $^ > $@
@@ -24,8 +30,8 @@ debug: os.bin kernel/kernel.elf
 	${GDB} -ex "target remote localhost:1234" -ex "symbol-file kernel/kernel.elf"
 #######
 
-%.o: %.c
-	$(CC) -O0 -g -ffreestanding -c $< -o $@
+%.o: %.c ${H_FILES}
+	$(CC) -Werror -O0 -g -ffreestanding -c $< -o $@
 
 %.o: %.asm
 	nasm -f elf $< -o $@
@@ -39,12 +45,10 @@ clean:
 # Rules to run OS on the host
 CC_HOST = /usr/bin/x86_64-pc-linux-gnu-gcc-13.2.1
 
-run_host: kernel.c
+host_run: kernel.c
 	$(CC_HOST) -m32 -O0 -g kernel.c -o a.out
 	./a.out
 
-test_host: test.c
+host_test: test.c
 	$(CC_HOST) -m32 -O0 -g test.c -o a.out
-	objdump -d -M intel ./a.out
 	./a.out
-
