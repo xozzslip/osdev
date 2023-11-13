@@ -21,8 +21,8 @@
     mov cr0, eax
     jmp segment_code:protected_mode_entry_point
 
-%include "boot/print16.asm"
-%include "boot/gdt.asm"
+%include "src/boot/print16.asm"
+%include "src/boot/gdt.asm"
 
 [bits 32]
 protected_mode_entry_point:

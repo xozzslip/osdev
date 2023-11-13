@@ -1,5 +1,5 @@
-#include "../drivers/screen.h"
-#include "../drivers/low_level.h"
+#include "drivers/screen.h"
+#include "drivers/low_level.h"
 
 void dummy() {
     dummy();  // do not enter there accidentelly
