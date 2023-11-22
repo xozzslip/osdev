@@ -1,7 +1,7 @@
 ; https://wiki.osdev.org/Global_Descriptor_Table
 
 gdt_start:
-gdt_null:
+gdt_null: ; each entry is 8 bytes
     dd 0
     dd 0
 gdt_code:
