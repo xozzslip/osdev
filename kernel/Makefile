@@ -1,9 +1,11 @@
-$(shell mkdir -p build build/drivers build/boot)
-C_FILES = $(wildcard src/*.c src/drivers/*.c)
-H_FILES = $(wildcard src/*.h src/drivers/*.h)
+$(shell mkdir -p build build/drivers build/boot build/interrupts)
+C_FILES = $(wildcard src/*.c src/drivers/*.c src/interrupts/*.c)
+H_FILES = $(wildcard src/*.h src/drivers/*.h src/interrupts/*.h)
+ASM_FILES = $(wildcard src/interrupts/*.asm)
 BUILD_DIR = build
 SRC_DIR = src
 OBJ_FILES = $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(C_FILES))
+OBJ_FILES += $(patsubst src/%.asm,$(BUILD_DIR)/%.o,$(ASM_FILES))
 
 CC = ~/code/osdev/cross-compiler/i386-elf/bin/i386-elf-gcc
 LD = ~/code/osdev/cross-compiler/i386-elf/bin/i386-elf-ld
@@ -48,6 +50,7 @@ $(BUILD_DIR)/%.bin: $(SRC_DIR)/%.asm
 
 clean:
 	rm -rf $(BUILD_DIR) a.out
+	ls
 
 # Rules to run OS on the host
 CC_HOST = /usr/bin/x86_64-pc-linux-gnu-gcc-13.2.1

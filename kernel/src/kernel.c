@@ -1,5 +1,6 @@
 #include "drivers/screen.h"
 #include "drivers/low_level.h"
+#include "interrupts/setup.h"
 
 void dummy() {
     dummy();  // do not enter there accidentelly
@@ -13,5 +14,6 @@ int main() {
     *video_memory = 'Z';
     kprint("xli na\njui dva\nememabcde12345");
     kprint("000000");
+    setup_idt();
     return 0;
 }
