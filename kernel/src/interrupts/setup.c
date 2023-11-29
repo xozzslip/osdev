@@ -1,4 +1,6 @@
 #include "../types.h"
+#include "../drivers/screen.h"
+#include "../drivers/low_level.h"
 
 extern void isr0();
 extern void isr1();
@@ -115,4 +117,10 @@ void setup_idt() {
         : "r"((u32) &ptr)
         : "eax"
     );
+}
+
+void isr_handler() {
+    kprint("This is ISR_HANDLER");
+    // spin_wait_milisecond();
+    return;
 }

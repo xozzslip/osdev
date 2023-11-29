@@ -1,23 +1,34 @@
+extern isr_handler
+
 %macro ISR_NOERRCODE 1  ; define a macro, taking one parameter
   global isr%1        ; %1 accesses the first parameter.
   isr%1:
     cli
-    push byte 0
+    push 0x00 ; this is dummy error code
     push byte %1
-    jmp isr_asm_handler
+    pusha ; EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
+    call isr_handler
+    popa
+    add esp, 0x08 ; this pops two entries
+    sti
+    ; interrupt pushes 3 4-byte values onto the stack
+    ; they are EIP, and two more (code segment I guess and some flags)
+    ; iret pops up those values
+    iret
 %endmacro
 
 %macro ISR_WITH_ERRCODE 1
-  global isr%1
-  isr%1:
+global isr%1
+isr%1:
     cli
-    push byte %1
-    jmp isr_asm_handler
+    push byte %1 ; error code was pushed implicitly
+    pusha
+    call isr_handler
+    popa
+    add esp, 0x08 ; this pops two entries (one of them is an error)
+    sti
+    iret
 %endmacro
-
-isr_asm_handler:
-    jmp isr_asm_handler
-
 
 ISR_NOERRCODE    0  ; 0: Divide By Zero Exception
 ISR_NOERRCODE    1  ; 1: Debug Exception

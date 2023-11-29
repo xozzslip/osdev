@@ -35,8 +35,14 @@ $(BUILD_DIR)/kernel.elf: $(BUILD_DIR)/kernel_entry.o $(OBJ_FILES)
 
 .PHONY: debug
 debug: $(BUILD_DIR)/os.bin $(BUILD_DIR)/kernel.elf
-	qemu-system-i386 -s -drive format=raw,file=os.bin &
-	$(GDB) -ex "target remote localhost:1234" -ex "symbol-file $(BUILD_DIR)/kernel.elf"
+	@( \
+		qemu-system-i386 -s -drive format=raw,file=$(BUILD_DIR)/os.bin & \
+		DAEMON_PID=$$!; \
+		echo "Qemu process started as daemon PID $$DAEMON_PID"; \
+		$(GDB) -ex "target remote localhost:1234" -ex "symbol-file $(BUILD_DIR)/kernel.elf" -x gdb_commands.txt; \
+		kill -9 $$DAEMON_PID; \
+		echo "Qemu process with PID $$DAEMON_PID was killed"; \
+	)
 #######
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c $(H_FILES)

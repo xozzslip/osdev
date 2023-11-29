@@ -13,7 +13,11 @@ int main() {
     char *video_memory = (char *) (0xb8000 + 2 * (14 * 80 + 2));
     *video_memory = 'Z';
     kprint("xli na\njui dva\nememabcde12345");
-    kprint("000000");
+    kprint("000000\n");
     setup_idt();
+    for (int i = 0; i >= 0; i--) {
+        int s = 10 / i;
+    }
+    kprint("OKAY");
     return 0;
 }
