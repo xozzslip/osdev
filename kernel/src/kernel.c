@@ -1,6 +1,6 @@
 #include "drivers/screen.h"
 #include "drivers/low_level.h"
-#include "interrupts/setup.h"
+#include "interrupts/interrupts.h"
 
 void dummy() {
     dummy();  // do not enter there accidentelly

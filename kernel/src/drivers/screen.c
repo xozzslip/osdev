@@ -1,5 +1,6 @@
 #include "low_level.h"
 #include "screen.h"
+#include "../types.h"
 
 // Miscellaneous Output Register
 // http://www.osdever.net/FreeVGA/vga/extreg.htm#3CCR3C2W
@@ -75,4 +76,23 @@ void kprint(char *string) {
         i++;
     }
     set_cursor_offset(cursor_offset);
+}
+
+void kprint_u32(u32 value) {
+    char s[10] = {0};
+    int size = 0;
+    for (int i = 0; i < 10; i++) {
+        int digit = value % 10;
+        s[i] = '0' + digit;
+        value /= 10;
+        size += 1;
+        if (value == 0) {
+            break;
+        }
+    }
+    char s2[10] = {0};
+    for (int i = 0; i < size; i++) {
+        s2[i] = s[size - 1 - i];
+    }
+    kprint((char *) s2);
 }

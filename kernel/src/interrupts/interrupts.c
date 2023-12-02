@@ -119,8 +119,19 @@ void setup_idt() {
     );
 }
 
-void isr_handler() {
-    kprint("This is ISR_HANDLER");
+void isr_handler(
+    u32 edi, u32 esi, u32 ebp, u32 esp, u32 ebx, u32 edx, u32 ecx, u32 eax,
+    u32 int_no, u32 error_code, u32 eip, u32 code_segment, u32 eflags) {
+    kprint("unhandled exception: ");
+    kprint("INT_NO=");
+    kprint_u32(int_no);
+    kprint(" ERROR_CODE=");
+    kprint_u32(error_code);
+    kprint(" EIP=");
+    kprint_u32(eip);
+    kprint("\n");
+
+    while (1) {}
     // spin_wait_milisecond();
     return;
 }
