@@ -62,3 +62,19 @@ ISR_NOERRCODE    28 ; 28: Reserved
 ISR_NOERRCODE    29 ; 29: Reserved
 ISR_NOERRCODE    30 ; 30: Reserved
 ISR_NOERRCODE    31 ; 31: Reserved
+ISR_NOERRCODE    32 ; 32: PIC interrupt 0
+ISR_NOERRCODE    33 ; 33: PIC interrupt 1
+ISR_NOERRCODE    34 ; 34: PIC interrupt 2
+ISR_NOERRCODE    35 ; 35: PIC interrupt 3
+ISR_NOERRCODE    36 ; 36: PIC interrupt 4
+ISR_NOERRCODE    37 ; 37: PIC interrupt 5
+ISR_NOERRCODE    38 ; 38: PIC interrupt 6
+ISR_NOERRCODE    39 ; 39: PIC interrupt 7
+ISR_NOERRCODE    40 ; 40: PIC interrupt 8
+ISR_NOERRCODE    41 ; 41: PIC interrupt 9
+ISR_NOERRCODE    42 ; 42: PIC interrupt 10
+ISR_NOERRCODE    43 ; 43: PIC interrupt 11
+ISR_NOERRCODE    44 ; 44: PIC interrupt 12
+ISR_NOERRCODE    45 ; 45: PIC interrupt 13
+ISR_NOERRCODE    46 ; 46: PIC interrupt 14
+ISR_NOERRCODE    47 ; 47: PIC interrupt 15

@@ -1,4 +1,5 @@
 [org 0x7c00]
+[bits 16]
     ; reading from disk
     mov bx, 0x1000 ; memory address where data will be loaded to
     mov ah, 2 ; int 0x13 command
@@ -34,7 +35,7 @@ protected_mode_entry_point:
     mov gs, ax
 
     ; print via memory mapped VGA
-    mov ebx, 0xb8000 + 2 * (14 * 80 + 2)
+    mov ebx, 0xb8000 + 2 * (14 * 80 + 20)
     mov eax, 0
     mov al, 'X' ; write 'X' in the middle of screen
     mov ah, 0x0f ; white on black

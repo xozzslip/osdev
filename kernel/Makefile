@@ -9,7 +9,7 @@ OBJ_FILES += $(patsubst src/%.asm,$(BUILD_DIR)/%.o,$(ASM_FILES))
 
 CC = ~/code/osdev/cross-compiler/i386-elf/bin/i386-elf-gcc
 LD = ~/code/osdev/cross-compiler/i386-elf/bin/i386-elf-ld
-GDB = ~/code/osdev/cross-compiler/i386-elf/bin/i386-elf-gdb
+GDB = LD_LIBRARY_PATH=/home/khasan/Software/python-3.11.9/lib ~/code/osdev/cross-compiler/i386-elf/bin/i386-elf-gdb
 
 .PHONY: run
 run: $(BUILD_DIR)/os.bin

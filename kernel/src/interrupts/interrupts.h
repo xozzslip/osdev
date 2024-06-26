@@ -1,1 +1,1 @@
-void setup_idt();
+void init_idt();

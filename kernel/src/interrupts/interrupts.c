@@ -34,6 +34,22 @@ extern void isr28();
 extern void isr29();
 extern void isr30();
 extern void isr31();
+extern void isr32(); // interrupts from PIC
+extern void isr33();
+extern void isr34();
+extern void isr35();
+extern void isr36();
+extern void isr37();
+extern void isr38();
+extern void isr39();
+extern void isr40();
+extern void isr41();
+extern void isr42();
+extern void isr43();
+extern void isr44();
+extern void isr45();
+extern void isr46();
+extern void isr47();
 
 struct idt_entry {
     u16 base_lo; // The lower 16 bits of the address to jump to when this interrupt fires.
@@ -64,13 +80,40 @@ struct idt_entry_ptr {
 }  __attribute__((packed));
 typedef struct idt_entry_ptr idt_entry_ptr;
 
-void setup_idt() {
-    // zero all idt entries by my awesome version of memset
-    // we need to do it, so all unused IDT entries have 0 in presence flag
-    for (int i = 0; i < 256 * sizeof(idt_entry); i++) {
-        ((u8 *)idt)[i] = (u8) 0;
-    }
+#define PIC1_COMMAND 0x20
+#define PIC2_COMMAND 0xA0
+#define PIC1_DATA    0x21
+#define PIC2_DATA    0xA1
+void remap_pic() {
+    port_byte_out(PIC1_COMMAND, 0x11);
+    port_byte_out(PIC2_COMMAND, 0x11);
+    port_byte_out(PIC1_DATA, 0x20);
+    port_byte_out(PIC2_DATA, 0x28);
+    port_byte_out(PIC1_DATA, 0x04);
+    port_byte_out(PIC2_DATA, 0x02);
+    port_byte_out(PIC1_DATA, 0x01);
+    port_byte_out(PIC2_DATA, 0x01);
+    port_byte_out(PIC1_DATA, 0x0);
+    port_byte_out(PIC2_DATA, 0x0);
+}
 
+void send_eoi_pic(u32 irq_no) {
+    port_byte_out(0x20,0x20);
+    if (irq_no >= 8) {
+        port_byte_out(0xa0,0x20);
+    }
+}
+
+void memset(void *ptr, u8 value, u32 size) {
+    for (int i = 0; i < size; i++) {
+        ((u8 *)ptr)[i] = value;
+    }
+}
+
+
+void init_idt() {
+    remap_pic();
+    memset(&idt, 0, sizeof(idt_entry)*256);
     idt[0]  = build_idt_entry(isr0);
     idt[1]  = build_idt_entry(isr1);
     idt[2]  = build_idt_entry(isr2);
@@ -103,21 +146,31 @@ void setup_idt() {
     idt[29] = build_idt_entry(isr29);
     idt[30] = build_idt_entry(isr30);
     idt[31] = build_idt_entry(isr31);
+    idt[32] = build_idt_entry(isr32);
+    idt[33] = build_idt_entry(isr33);
+    idt[34] = build_idt_entry(isr34);
+    idt[35] = build_idt_entry(isr35);
+    idt[36] = build_idt_entry(isr36);
+    idt[37] = build_idt_entry(isr37);
+    idt[38] = build_idt_entry(isr38);
+    idt[39] = build_idt_entry(isr39);
+    idt[40] = build_idt_entry(isr40);
+    idt[41] = build_idt_entry(isr41);
+    idt[42] = build_idt_entry(isr42);
+    idt[43] = build_idt_entry(isr43);
+    idt[44] = build_idt_entry(isr44);
+    idt[45] = build_idt_entry(isr45);
+    idt[46] = build_idt_entry(isr46);
+    idt[47] = build_idt_entry(isr47);
 
     // intialize special pointer structure
     idt_entry_ptr ptr;
-    ptr.base = (u32) idt;
+    ptr.base = (u32) &idt;
     ptr.limit = 256 * sizeof(idt_entry) - 1;
 
-    // load IDT
-    __asm__(
-        "mov %0, %%eax\n\t"
-        "lidt (%%eax)"
-        :
-        : "r"((u32) &ptr)
-        : "eax"
-    );
+    __asm__ volatile("lidt %0" : : "m" (ptr));
 }
+
 
 void isr_handler(
     u32 edi, u32 esi, u32 ebp, u32 esp, u32 ebx, u32 edx, u32 ecx, u32 eax,
@@ -131,7 +184,10 @@ void isr_handler(
     kprint_u32(eip);
     kprint("\n");
 
-    while (1) {}
-    // spin_wait_milisecond();
+    if (int_no >= 32) { // this is PIC interrupt
+        u32 irq_no = int_no - 32;
+        send_eoi_pic(irq_no);
+    }
+    // while (1) {}
     return;
 }

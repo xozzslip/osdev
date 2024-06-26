@@ -1,5 +1,6 @@
 #include "drivers/screen.h"
 #include "drivers/low_level.h"
+#include "drivers/timer.h"
 #include "interrupts/interrupts.h"
 
 void dummy() {
@@ -10,14 +11,15 @@ void dummy() {
 
 int main() {
     // ospin_wait();
+    init_idt();
+    init_timer(1);
+    asm volatile("sti");
     char *video_memory = (char *) (0xb8000 + 2 * (14 * 80 + 2));
     *video_memory = 'Z';
     kprint("xli na\njui dva\nememabcde12345");
     kprint("000000\n");
-    setup_idt();
-    for (int i = 0; i >= 0; i--) {
-        int s = 10 / i;
+    for(;;) {
+        asm("hlt");
     }
-    kprint("OKAY");
     return 0;
 }
