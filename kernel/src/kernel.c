@@ -12,10 +12,7 @@ void dummy() {
 u32 timer_called = 0 ;
 
 void timer_callback(registers_t registers) {
-    timer_called += 1;
-    kprint("timer counter=");
-    kprint_u32(timer_called);
-    kprint("\n");
+    return;
 }
 
 int main() {
