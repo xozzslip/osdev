@@ -31,23 +31,23 @@ int calc_row(unsigned short offset) {
 }
 
 unsigned short get_cursor_offset() {
-    unsigned char prev_addr = port_byte_in(VGA_REG_CRT_ADDRESS);
-    port_byte_out(VGA_REG_CRT_ADDRESS, VGA_IDX_CRT_CURSOR_HIGH);
-    unsigned short current_offset = port_byte_in(VGA_REG_CRT_DATA);
+    unsigned char prev_addr = inb(VGA_REG_CRT_ADDRESS);
+    outb(VGA_REG_CRT_ADDRESS, VGA_IDX_CRT_CURSOR_HIGH);
+    unsigned short current_offset = inb(VGA_REG_CRT_DATA);
     current_offset = current_offset << 8;
-    port_byte_out(VGA_REG_CRT_ADDRESS, VGA_IDX_CRT_CURSOR_LOW);
-    current_offset += port_byte_in(VGA_REG_CRT_DATA);
-    port_byte_out(VGA_REG_CRT_ADDRESS, prev_addr);
+    outb(VGA_REG_CRT_ADDRESS, VGA_IDX_CRT_CURSOR_LOW);
+    current_offset += inb(VGA_REG_CRT_DATA);
+    outb(VGA_REG_CRT_ADDRESS, prev_addr);
     return current_offset;
 }
 
 void set_cursor_offset(unsigned short offset) {
-    unsigned char prev_addr = port_byte_in(VGA_REG_CRT_ADDRESS);
-    port_byte_out(VGA_REG_CRT_ADDRESS, VGA_IDX_CRT_CURSOR_HIGH);
-    port_byte_out(VGA_REG_CRT_DATA, (offset & 0xff00) >> 8);
-    port_byte_out(VGA_REG_CRT_ADDRESS, VGA_IDX_CRT_CURSOR_LOW);
-    port_byte_out(VGA_REG_CRT_DATA, (offset & 0xff));
-    port_byte_out(VGA_REG_CRT_ADDRESS, prev_addr);
+    unsigned char prev_addr = inb(VGA_REG_CRT_ADDRESS);
+    outb(VGA_REG_CRT_ADDRESS, VGA_IDX_CRT_CURSOR_HIGH);
+    outb(VGA_REG_CRT_DATA, (offset & 0xff00) >> 8);
+    outb(VGA_REG_CRT_ADDRESS, VGA_IDX_CRT_CURSOR_LOW);
+    outb(VGA_REG_CRT_DATA, (offset & 0xff));
+    outb(VGA_REG_CRT_ADDRESS, prev_addr);
     return;
 }
 

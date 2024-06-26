@@ -15,6 +15,10 @@ void timer_callback(registers_t registers) {
     return;
 }
 
+void keyboard_callback(registers_t register) {
+
+}
+
 int main() {
     // ospin_wait();
     init_idt();

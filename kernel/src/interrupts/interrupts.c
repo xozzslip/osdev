@@ -88,22 +88,22 @@ typedef struct idt_entry_ptr idt_entry_ptr;
 #define PIC1_DATA    0x21
 #define PIC2_DATA    0xA1
 void remap_pic() {
-    port_byte_out(PIC1_COMMAND, 0x11);
-    port_byte_out(PIC2_COMMAND, 0x11);
-    port_byte_out(PIC1_DATA, 0x20);
-    port_byte_out(PIC2_DATA, 0x28);
-    port_byte_out(PIC1_DATA, 0x04);
-    port_byte_out(PIC2_DATA, 0x02);
-    port_byte_out(PIC1_DATA, 0x01);
-    port_byte_out(PIC2_DATA, 0x01);
-    port_byte_out(PIC1_DATA, 0x0);
-    port_byte_out(PIC2_DATA, 0x0);
+    outb(PIC1_COMMAND, 0x11);
+    outb(PIC2_COMMAND, 0x11);
+    outb(PIC1_DATA, 0x20);
+    outb(PIC2_DATA, 0x28);
+    outb(PIC1_DATA, 0x04);
+    outb(PIC2_DATA, 0x02);
+    outb(PIC1_DATA, 0x01);
+    outb(PIC2_DATA, 0x01);
+    outb(PIC1_DATA, 0x0);
+    outb(PIC2_DATA, 0x0);
 }
 
 void send_eoi_pic(u32 irq_no) {
-    port_byte_out(0x20,0x20);
+    outb(0x20,0x20);
     if (irq_no >= 8) {
-        port_byte_out(0xa0,0x20);
+        outb(0xa0,0x20);
     }
 }
 

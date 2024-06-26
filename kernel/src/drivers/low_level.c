@@ -1,6 +1,6 @@
 #include "low_level.h"
 
-unsigned char port_byte_in(unsigned short port) {
+unsigned char inb(unsigned short port) {
     unsigned char data = 0;
     __asm__(
         "mov %1, %%dx\n\t"
@@ -13,7 +13,7 @@ unsigned char port_byte_in(unsigned short port) {
     return data;
 }
 
-void port_byte_out(unsigned short port, unsigned char data) {
+void outb(unsigned short port, unsigned char data) {
     __asm__(
         "mov %1, %%dx\n\t"
         "mov %0, %%al\n\t"
