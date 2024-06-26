@@ -1,6 +1,7 @@
 #include "../types.h"
 #include "../drivers/screen.h"
 #include "../drivers/low_level.h"
+#include "interrupts.h"
 
 extern void isr0();
 extern void isr1();
@@ -60,8 +61,10 @@ struct idt_entry {
 } __attribute__((packed));
 typedef struct idt_entry idt_entry;
 
+
 // TODO: make sure that this is on 8 byte boundary (check intel guide 6.10)
 idt_entry idt[256];
+void (*irq_handlers[256])(registers_t);
 
 idt_entry build_idt_entry(void (*handler)()) {
     u32 handler_address = (u32) handler;
@@ -114,6 +117,7 @@ void memset(void *ptr, u8 value, u32 size) {
 void init_idt() {
     remap_pic();
     memset(&idt, 0, sizeof(idt_entry)*256);
+    memset(&irq_handlers, 0, sizeof(void *));
     idt[0]  = build_idt_entry(isr0);
     idt[1]  = build_idt_entry(isr1);
     idt[2]  = build_idt_entry(isr2);
@@ -171,23 +175,50 @@ void init_idt() {
     __asm__ volatile("lidt %0" : : "m" (ptr));
 }
 
+void register_irq_handler(int irq_no, void(*handler)(registers_t registers)) {
+    irq_handlers[irq_no] = handler;
+}
 
 void isr_handler(
     u32 edi, u32 esi, u32 ebp, u32 esp, u32 ebx, u32 edx, u32 ecx, u32 eax,
     u32 int_no, u32 error_code, u32 eip, u32 code_segment, u32 eflags) {
-    kprint("unhandled exception: ");
-    kprint("INT_NO=");
-    kprint_u32(int_no);
-    kprint(" ERROR_CODE=");
-    kprint_u32(error_code);
-    kprint(" EIP=");
-    kprint_u32(eip);
-    kprint("\n");
+
+    registers_t registers;
+    registers.edi = edi;
+    registers.esi = esi;
+    registers.ebp = ebp;
+    registers.esp = esp;
+    registers.ebx = ebx;
+    registers.edx = edx;
+    registers.ecx = ecx;
+    registers.eax = eax;
+    registers.eip = eip;
+    registers.code_segment = code_segment;
+    registers.eflags = eflags;
 
     if (int_no >= 32) { // this is PIC interrupt
         u32 irq_no = int_no - 32;
+        void (*handler)(registers_t) = irq_handlers[irq_no];
+        if (handler != 0) {
+            handler(registers);
+        } else {
+            kprint("unhandled IRQ: ");
+            kprint("IRQ_NO=");
+            kprint_u32(irq_no);
+            kprint(" EIP=");
+            kprint_u32(eip);
+            kprint("\n");
+        }
         send_eoi_pic(irq_no);
+    } else {
+        kprint("unhandled interrupt: ");
+        kprint("INT_NO=");
+        kprint_u32(int_no);
+        kprint(" ERROR_CODE=");
+        kprint_u32(error_code);
+        kprint(" EIP=");
+        kprint_u32(eip);
+        kprint("\n");
     }
-    // while (1) {}
     return;
 }

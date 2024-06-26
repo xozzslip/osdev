@@ -9,10 +9,20 @@ void dummy() {
     // call main instead of jumping into this file
 }
 
+u32 timer_called = 0 ;
+
+void timer_callback(registers_t registers) {
+    timer_called += 1;
+    kprint("timer counter=");
+    kprint_u32(timer_called);
+    kprint("\n");
+}
+
 int main() {
     // ospin_wait();
     init_idt();
     init_timer(1);
+    register_irq_handler(0, timer_callback);
     asm volatile("sti");
     char *video_memory = (char *) (0xb8000 + 2 * (14 * 80 + 2));
     *video_memory = 'Z';
