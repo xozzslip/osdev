@@ -3,6 +3,7 @@
 #include "drivers/timer.h"
 #include "drivers/keyboard.h"
 #include "interrupts/interrupts.h"
+#include <stddef.h>
 
 void dummy() {
     dummy();  // do not enter there accidentelly
@@ -14,6 +15,11 @@ u32 timer_called = 0 ;
 
 void timer_callback(registers_t registers) {
     return;
+}
+
+void* kmalloc(size_t size) {
+
+
 }
 
 
@@ -31,6 +37,7 @@ int main() {
     // *video_memory = 'Z';
     kprint("xli na\njui dva\nememabcde12345");
     kprint("000000\n");
+
 
     for(;;) {
         asm("hlt");
