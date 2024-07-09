@@ -45,21 +45,42 @@ def check_kernel_code(kernel_code: bytes):
     assert len(kernel_code) <= 1024 ** 2 - 512, "kernel code must have size 1MiB - 512 bytes for MBR"
     assert len(kernel_code) < 63 * 1024, "right now we load only first 63.5 KiB of kernel code"
 
+def shell(command: str):
+    subprocess.run(command, shell=True, check=True)
+
 
 def create_disk_image(path: str):
     # mformat -i $@ -F ::
 	# mmd -i $@ ::/boot
 	# mcopy -i $@ $< ::/boot
-    # with tempfile.TemporaryFile(mode='w+b') as f:
-        # subprocess.run(f"dd if=/dev/zero of={f.name} bs=1M count=39")
-        # subprocess.run(f"mformat -i {f.name} -F :: && mmd -i ${f.name} ::/home")
-    bytes_to_flush = bytearray(40 * 1024 ** 2)  # 40 MiB
+    with tempfile.TemporaryDirectory() as temp_dir:
+        fat32_path = os.path.join(temp_dir, "fat32.img")
+        hello_path = os.path.join(temp_dir, "hello.txt")
+
+        with open(os.path.join(temp_dir, "hello.txt"), "w") as f:
+            f.write("Hello World!\n")
+
+        shell(f"dd if=/dev/zero of={fat32_path} bs=1M count=39 status=none")
+        shell(f"mformat -i {fat32_path} -F ::")
+        shell(f"mmd -i {fat32_path} ::/home")
+        shell(f"mcopy -i {fat32_path} {hello_path} ::/home")
+
+        with open(fat32_path, "rb") as f:
+            fat32_partition_bytes = f.read()
+
+    bytes_to_flush = bytearray(1024 ** 2)         # 1 MiB
+    bytes_to_flush += fat32_partition_bytes       # 39 MiB
+    assert len(bytes_to_flush) == 40 * 1024 ** 2  # 40 MiB
     # write MBR signature
     bytes_to_flush[510:512] = bytes.fromhex("55AA")
     # write parition table
     partition = bytearray(16)
-    partition[4] = 0x0B  #  FAT32
-    partition[8:12] = (2048).to_bytes(4, byteorder="little", signed=False)
+    partition[4] = 0x0C  #  FAT32 with LBA addressing
+    lba_start = 2048  # after partition gap
+    number_of_sectors = len(fat32_partition_bytes) // 512
+    assert len(fat32_partition_bytes) % 512 == 0
+    partition[8:12] = lba_start.to_bytes(4, byteorder="little", signed=False)
+    partition[12:16] = number_of_sectors.to_bytes(4, byteorder="little", signed=False)
     bytes_to_flush[446:446+16] = partition
     with open(path, "wb") as f:
         f.write(bytes_to_flush)
