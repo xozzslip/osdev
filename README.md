@@ -2,6 +2,7 @@ Dependencies:
 
 1) cross-compiler (write some notes on how to install it)
 2) python compiled with --enable-shared. GDB depends on python dynamic library and not on python itself.
+3) mtools for managing FAT32 disk images without mounting them. I use this since mounting require root permissions
 
 Install Python 3.11. Because my GDB dependant on this exact version. On my machine I do something like this in Python3.11 sources directory:
 ```

@@ -1,6 +1,10 @@
 import argparse
 from dataclasses import dataclass
 from typing import List
+import subprocess
+import tempfile
+import os
+
 
 @dataclass
 class Partition:
@@ -21,8 +25,9 @@ def read_partitions_from_mbr(mbr: bytes) -> List[Partition]:
 
 
 def check_disk_mbr(mbr: bytes):
+    assert len(mbr) == 512, f"length of MBR must be 512 bytes, not {len(mbr)}"
     assert mbr[-2:] == bytes.fromhex("55AA")
-    # print(f"Disk \"{disk_image_path}\" partition table:")
+    # print(f"Disk partition table:")
     partitions = read_partitions_from_mbr(mbr)
     for i, partition in enumerate(partitions):
         # print(f"    Partition {i+1} type={partition.type_code} lba_begin={partition.lba_begin}")
@@ -41,33 +46,56 @@ def check_kernel_code(kernel_code: bytes):
     assert len(kernel_code) < 63 * 1024, "right now we load only first 63.5 KiB of kernel code"
 
 
+def create_disk_image(path: str):
+    # mformat -i $@ -F ::
+	# mmd -i $@ ::/boot
+	# mcopy -i $@ $< ::/boot
+    # with tempfile.TemporaryFile(mode='w+b') as f:
+        # subprocess.run(f"dd if=/dev/zero of={f.name} bs=1M count=39")
+        # subprocess.run(f"mformat -i {f.name} -F :: && mmd -i ${f.name} ::/home")
+    bytes_to_flush = bytearray(40 * 1024 ** 2)  # 40 MiB
+    # write MBR signature
+    bytes_to_flush[510:512] = bytes.fromhex("55AA")
+    # write parition table
+    partition = bytearray(16)
+    partition[4] = 0x0B  #  FAT32
+    partition[8:12] = (2048).to_bytes(4, byteorder="little", signed=False)
+    bytes_to_flush[446:446+16] = partition
+    with open(path, "wb") as f:
+        f.write(bytes_to_flush)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create bootable disk image with operating system")
+    parser.add_argument("--recreate", action="store_true")
     parser.add_argument("disk.img", help="Path to disk image")
     parser.add_argument("boot.bin", help="Path to executable that will be written to MBR")
     parser.add_argument("kernel.bin", help="Path to kernel executable")
     args: argparse.Namespace = parser.parse_args()
-    disk_image_path = getattr(args, "disk.img")
-    boot_path = getattr(args, "boot.bin")
-    kernel_path = getattr(args, "kernel.bin")
+    disk_image_path: str = getattr(args, "disk.img")
+    boot_path: str = getattr(args, "boot.bin")
+    kernel_path: str = getattr(args, "kernel.bin")
+    recreate: bool = getattr(args, "recreate")
+
+    if recreate or not os.path.exists(disk_image_path):
+        print("Creating disk image")
+        create_disk_image(disk_image_path)
 
     with open(disk_image_path, "rb") as f:
         mbr = f.read(512)
         check_disk_mbr(mbr)
-
     with open(boot_path, "rb") as f:
         boot_code = f.read()
         check_boot_code(boot_code)
-
-
     with open(kernel_path, "rb") as f:
         kernel_code = f.read()
         check_kernel_code(kernel_code)
 
-    bytes_to_flush = bytearray(1024 ** 2)  # 1 MiB
+    bytes_to_flush = bytearray(1024 ** 2)  # only first 1 MiB is altered
     bytes_to_flush[0:446] = boot_code[0:446]
     bytes_to_flush[446:512] = mbr[446:512]
-    bytes_to_flush[512:] = kernel_code
+    bytes_to_flush[512:512+len(kernel_code)] = kernel_code
 
     with open(disk_image_path, 'r+b') as f:
         f.write(bytes_to_flush)  # Write to start of the disk image
+
+    print("OS successfully flushed to the disk")
