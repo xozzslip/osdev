@@ -1,6 +1,8 @@
 *.bin
 *.elf
 *.o
+*.pyc
+__pycache__
 a.out
 cross-compiler/
 .vscode/

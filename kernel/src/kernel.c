@@ -17,7 +17,6 @@ void timer_callback(registers_t registers) {
 }
 
 
-
 int main() {
     // ospin_wait();
     init_idt();

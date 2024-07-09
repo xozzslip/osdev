@@ -3,7 +3,7 @@
     ; reading from disk
     mov bx, 0x7E00 ; memory address where data will be loaded to
     mov ah, 2 ; int 0x13 command
-    mov al, 127 ; number of sectors to read (read 127 sectors (254 KiB))
+    mov al, 127 ; number of sectors to read (read 127 sectors (63.5 KiB)) we can change it easily up to about 400 KiB just by reading more sectors. But more we can load only in Protected mode because in real mode only 480KiB of memory are usable.
     mov cl, 2 ; sector number  (1-17 dec.) enumerated from 1!
     mov ch, 0 ; track number is zero (hopefully that track has a few sectors)
     ; dl should be already set by BIOS, it is a number of disk
