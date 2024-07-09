@@ -28,12 +28,14 @@ protected_mode_entry_point:
     mov fs, ax
     mov gs, ax
 
+    ; Set stack to second MiB, so space for stack is 1 MiB
+    mov esp, 0x1fffff
     ; print via memory mapped VGA
-    mov ebx, 0xb8000 + 2 * (14 * 80 + 20)
-    mov eax, 0
-    mov al, 'C' ; write 'X' in the middle of screen
-    mov ah, 0x0f ; white on black
-    mov [ds:ebx], eax
+    ; mov ebx, 0xb8000 + 2 * (14 * 80 + 20)
+    ; mov eax, 0
+    ; mov al, 'C' ; write 'X' in the middle of screen
+    ; mov ah, 0x0f ; white on black
+    ; mov [ds:ebx], eax
     jmp 0x7E00
 
 %include "src/boot/print16.asm"

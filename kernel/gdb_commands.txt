@@ -1,4 +1,3 @@
 set confirm off
 layout split
 break main
-continue

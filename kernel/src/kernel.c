@@ -19,15 +19,19 @@ void timer_callback(registers_t registers) {
 
 int main() {
     // ospin_wait();
+    int x = 10;
+    kprint_u32(x);
     init_idt();
     init_timer(1);
     register_irq_handler(0, timer_callback);
+
     register_irq_handler(1, keyboard_callback);
     asm volatile("sti");
-    char *video_memory = (char *) (0xb8000 + 2 * (14 * 80 + 2));
-    *video_memory = 'Z';
+    // char *video_memory = (char *) (0xb8000 + 2 * (14 * 80 + 2));
+    // *video_memory = 'Z';
     kprint("xli na\njui dva\nememabcde12345");
     kprint("000000\n");
+
     for(;;) {
         asm("hlt");
     }

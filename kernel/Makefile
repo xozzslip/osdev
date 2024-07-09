@@ -9,12 +9,13 @@ CC = i386-elf-gcc
 LD = i386-elf-ld
 GDB = i386-elf-gdb
 
-build/disk.img: build/boot/boot.bin build/kernel.bin
-	python scripts/flush_os_to_disk.py $@ $^
-
+# Run 32 bit machine with 128M of RAM
 .PHONY: run
 run: build/disk.img
-	qemu-system-i386 -drive format=raw,file=build/disk.img
+	qemu-system-i386 -m 128M -drive format=raw,file=build/disk.img
+
+build/disk.img: build/boot/boot.bin build/kernel.bin
+	python scripts/flush_os_to_disk.py $@ $^
 
 .PHONY: build
 build: build/disk.img
@@ -46,7 +47,7 @@ build/kernel.elf: build/kernel_entry.o $(OBJ_FILES)
 .PHONY: debug
 debug: build/disk.img build/kernel.elf
 	@( \
-		qemu-system-i386 -s -drive format=raw,file=build/disk.img & \
+		qemu-system-i386 -m 128M -s -drive format=raw,file=build/disk.img & \
 		DAEMON_PID=$$!; \
 		echo "Qemu process started as daemon PID $$DAEMON_PID"; \
 		$(GDB) -ex "target remote localhost:1234" -ex "symbol-file build/kernel.elf" -x gdb_commands.txt; \
