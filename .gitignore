@@ -2,6 +2,7 @@
 *.elf
 *.o
 a.out
-cross-compiler/*
-.vscode
-kernel/build
+cross-compiler/
+.vscode/
+kernel/build/
+python-3.11.9/

@@ -7,9 +7,9 @@ SRC_DIR = src
 OBJ_FILES = $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(C_FILES))
 OBJ_FILES += $(patsubst src/%.asm,$(BUILD_DIR)/%.o,$(ASM_FILES))
 
-CC = ~/code/osdev/cross-compiler/i386-elf/bin/i386-elf-gcc
-LD = ~/code/osdev/cross-compiler/i386-elf/bin/i386-elf-ld
-GDB = LD_LIBRARY_PATH=/home/khasan/Software/python-3.11.9/lib ~/code/osdev/cross-compiler/i386-elf/bin/i386-elf-gdb
+CC = i386-elf-gcc
+LD = i386-elf-ld
+GDB = i386-elf-gdb
 
 .PHONY: run
 run: $(BUILD_DIR)/os.bin
