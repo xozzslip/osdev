@@ -26,12 +26,12 @@ $(BUILD_DIR)/os.bin: $(BUILD_DIR)/boot/boot.bin $(BUILD_DIR)/kernel.bin
 	cat $^ > $@
 
 $(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel_entry.o $(OBJ_FILES)
-	$(LD) $^ -o $@ -Ttext 0x1000 --oformat binary
+	$(LD) $^ -o $@ -Ttext 0x7E00 --oformat binary
 
 ######
 # This is used for debugging
 $(BUILD_DIR)/kernel.elf: $(BUILD_DIR)/kernel_entry.o $(OBJ_FILES)
-	$(LD) $^ -o $@ -Ttext 0x1000
+	$(LD) $^ -o $@ -Ttext 0x7E00
 
 .PHONY: debug
 debug: $(BUILD_DIR)/os.bin $(BUILD_DIR)/kernel.elf
@@ -68,3 +68,13 @@ host_run: kernel.c
 host_test: test.c
 	$(CC_HOST) -m32 -O0 -g test.c -o a.out
 	./a.out
+
+
+#### Create disk image ####
+$(BUILD_DIR)/disk.img: $(BUILD_DIR)/os.bin
+	rm -rf $@
+	dd if=/dev/zero of=$@ bs=1M count=34
+	mformat -i $@ -F ::
+	mmd -i $@ ::/boot
+	mcopy -i $@ $< ::/boot
+###########################
