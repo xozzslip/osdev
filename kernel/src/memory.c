@@ -27,9 +27,12 @@ typedef struct AddressRangeDescriptor AddressRangeDescriptor;
 typedef struct {
     size_t size;
     void* start;
-} HeapChunk;
+    ChunkHeader* next;
+    ChunkHeader* prev;
+    char magic[4];
+} ChunkHeader;
 
-HeapChunk* allocated;
+ChunkHeader* root;
 
 void panic(const char* s, ...)
 {
@@ -57,14 +60,6 @@ void assert_memory(void* from, void* to, uint8_t value)
 
 void setup_kernel_heap()
 {
-    allocated = (void*)HEAP_START;
-    for (int i = 0; i < CHUNKS_LIMIT; i++) {
-        HeapChunk chunk;
-        allocated[i] = chunk;
-    }
-    allocated[0].start = (void*)HEAP_START;
-    allocated[0].size = sizeof(HeapChunk) * CHUNKS_LIMIT;
-
     // according to convention between bootloader and kernel (check memory map)
     AddressRangeDescriptor* ranges = (void*)0x0500;
     AddressRangeDescriptor main_range;
@@ -76,18 +71,47 @@ void setup_kernel_heap()
             main_range = range;
         }
     }
-    uint32_t available_memory = main_range.length_low;
-    kprintf("available memory %uMiB\n", available_memory / 1024 / 1024);
+    uint32_t total_memory = main_range.length_low;
+    kprintf("available memory %uMiB\n", total_memory / 1024 / 1024);
 
-    if (available_memory < HEAP_LIMIT) {
+    if (total_memory < HEAP_LIMIT) {
         panic("PANIC not enough memory!");
     }
+
+    ChunkHeader chunk = {
+        .start = (void*)HEAP_START,
+        .size = HEAP_LIMIT,
+        .next = NULL,
+        .prev = NULL,
+        .magic = { 'F', 'R', 'E', 'E' },
+    };
+
+    root = (ChunkHeader*)HEAP_START;
+    *root = chunk;
 }
 
-void* malloc(size_t size)
+void* malloc(size_t requested_size)
 {
-    for (int i = 1; i < CHUNKS_LIMIT; i++) {
-        HeapChunk prev = allocated[i - 1];
-        HeapChunk current = allocated[i];
+    size_t size = requested_size + sizeof(ChunkHeader);
+    ChunkHeader* cur = root;
+    while (cur != NULL && cur->size < size) {
+        cur = cur->next;
+    }
+    if (cur == NULL) {
+        return NULL;
+    }
+    ChunkHeader free = *cur;
+    ChunkHeader used = {
+        .start = cur->start,
+        .size = size,
+        .next = NULL,
+        .prev = NULL,
+        .magic = { 'U', 'S', 'E', 'D' },
+    };
+    *cur = used;
+
+    if (cur->size > size) {
+
+    } else {
     }
 }
