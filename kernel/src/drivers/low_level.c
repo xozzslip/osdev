@@ -1,6 +1,7 @@
 #include "low_level.h"
 
-unsigned char inb(unsigned short port) {
+unsigned char inb(unsigned short port)
+{
     unsigned char data = 0;
     __asm__(
         "mov %1, %%dx\n\t"
@@ -8,23 +9,23 @@ unsigned char inb(unsigned short port) {
         "mov %%al, %0"
         : "=r"(data)
         : "r"(port)
-        : "al", "dx"
-    );
+        : "al", "dx");
     return data;
 }
 
-void outb(unsigned short port, unsigned char data) {
+void outb(unsigned short port, unsigned char data)
+{
     __asm__(
         "mov %1, %%dx\n\t"
         "mov %0, %%al\n\t"
         "out %%al, %%dx"
         :
         : "r"(data), "r"(port)
-        : "al", "dx"
-    );
+        : "al", "dx");
 }
 
-unsigned char port_word_in(unsigned short port) {
+unsigned char port_word_in(unsigned short port)
+{
     unsigned short data = 0;
     __asm__(
         "mov %1, %%dx\n\t"
@@ -32,40 +33,41 @@ unsigned char port_word_in(unsigned short port) {
         "mov %%ax, %0"
         : "=r"(data)
         : "r"(port)
-        : "ax", "dx"
-    );
+        : "ax", "dx");
     return data;
 }
 
-void port_word_out(unsigned short port, unsigned short data) {
+void port_word_out(unsigned short port, unsigned short data)
+{
     __asm__(
         "mov %1, %%dx\n\t"
         "mov %0, %%ax\n\t"
         "out %%ax, %%dx"
         :
         : "r"(data), "r"(port)
-        : "ax", "dx"
-    );
+        : "ax", "dx");
 }
 
-void spin_wait_second() {
+void spin_wait_second()
+{
     int x = 0;
-        for (int i = 0; i < 100000000; i++) {
+    for (int i = 0; i < 100000000; i++) {
         x += i;
     }
     return;
 }
 
-void spin_wait_milisecond() {
+void spin_wait_milisecond()
+{
     int x = 0;
-        for (int i = 0; i < 100000; i++) {
+    for (int i = 0; i < 100000; i++) {
         x += i;
     }
     return;
 }
 
-
-void empty_func() {
+void empty_func()
+{
     int a = 10;
     return;
 }

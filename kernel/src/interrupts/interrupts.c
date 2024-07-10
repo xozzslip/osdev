@@ -1,7 +1,7 @@
-#include "../types.h"
-#include "../drivers/screen.h"
-#include "../drivers/low_level.h"
 #include "interrupts.h"
+#include "../drivers/low_level.h"
+#include "../drivers/screen.h"
+#include "../types.h"
 
 extern void isr0();
 extern void isr1();
@@ -54,23 +54,23 @@ extern void isr47();
 
 struct idt_entry {
     u16 base_lo; // The lower 16 bits of the address to jump to when this interrupt fires.
-    u16 sel;     // Kernel segment selector.
-    u8  always0; // This must always be zero.
-    u8  flags;   // More flags. See documentation.
+    u16 sel; // Kernel segment selector.
+    u8 always0; // This must always be zero.
+    u8 flags; // More flags. See documentation.
     u16 base_hi; // The upper 16 bits of the address to jump to.
 } __attribute__((packed));
 typedef struct idt_entry idt_entry;
-
 
 // TODO: make sure that this is on 8 byte boundary (check intel guide 6.10)
 idt_entry idt[256];
 void (*irq_handlers[256])(registers_t);
 
-idt_entry build_idt_entry(void (*handler)()) {
-    u32 handler_address = (u32) handler;
+idt_entry build_idt_entry(void (*handler)())
+{
+    u32 handler_address = (u32)handler;
     idt_entry e;
-    e.base_lo = (u16) (handler_address & 0xFFFF);
-    e.base_hi = (u16) ((handler_address >> 16) & 0xFFFF);
+    e.base_lo = (u16)(handler_address & 0xFFFF);
+    e.base_hi = (u16)((handler_address >> 16) & 0xFFFF);
     e.sel = 0x08; // points to kernel "segment_code" (check gdt.asm)
     e.always0 = 0;
     e.flags = 0x8E;
@@ -79,15 +79,16 @@ idt_entry build_idt_entry(void (*handler)()) {
 
 struct idt_entry_ptr {
     u16 limit; // The limit value is expressed in bytes and is added to the base address to get the address of the last valid byte.
-    u32 base;  // The address of the first element in our idt_entry array.
-}  __attribute__((packed));
+    u32 base; // The address of the first element in our idt_entry array.
+} __attribute__((packed));
 typedef struct idt_entry_ptr idt_entry_ptr;
 
 #define PIC1_COMMAND 0x20
 #define PIC2_COMMAND 0xA0
-#define PIC1_DATA    0x21
-#define PIC2_DATA    0xA1
-void remap_pic() {
+#define PIC1_DATA 0x21
+#define PIC2_DATA 0xA1
+void remap_pic()
+{
     outb(PIC1_COMMAND, 0x11);
     outb(PIC2_COMMAND, 0x11);
     outb(PIC1_DATA, 0x20);
@@ -100,34 +101,36 @@ void remap_pic() {
     outb(PIC2_DATA, 0x0);
 }
 
-void send_eoi_pic(u32 irq_no) {
-    outb(0x20,0x20);
+void send_eoi_pic(u32 irq_no)
+{
+    outb(0x20, 0x20);
     if (irq_no >= 8) {
-        outb(0xa0,0x20);
+        outb(0xa0, 0x20);
     }
 }
 
-void memset(void *ptr, u8 value, u32 size) {
+void memset(void* ptr, u8 value, u32 size)
+{
     for (int i = 0; i < size; i++) {
-        ((u8 *)ptr)[i] = value;
+        ((u8*)ptr)[i] = value;
     }
 }
 
-
-void init_idt() {
+void init_idt()
+{
     remap_pic();
-    memset(&idt, 0, sizeof(idt_entry)*256);
-    memset(&irq_handlers, 0, sizeof(void *));
-    idt[0]  = build_idt_entry(isr0);
-    idt[1]  = build_idt_entry(isr1);
-    idt[2]  = build_idt_entry(isr2);
-    idt[3]  = build_idt_entry(isr3);
-    idt[4]  = build_idt_entry(isr4);
-    idt[5]  = build_idt_entry(isr5);
-    idt[6]  = build_idt_entry(isr6);
-    idt[7]  = build_idt_entry(isr7);
-    idt[8]  = build_idt_entry(isr8);
-    idt[9]  = build_idt_entry(isr9);
+    memset(&idt, 0, sizeof(idt_entry) * 256);
+    memset(&irq_handlers, 0, sizeof(void*));
+    idt[0] = build_idt_entry(isr0);
+    idt[1] = build_idt_entry(isr1);
+    idt[2] = build_idt_entry(isr2);
+    idt[3] = build_idt_entry(isr3);
+    idt[4] = build_idt_entry(isr4);
+    idt[5] = build_idt_entry(isr5);
+    idt[6] = build_idt_entry(isr6);
+    idt[7] = build_idt_entry(isr7);
+    idt[8] = build_idt_entry(isr8);
+    idt[9] = build_idt_entry(isr9);
     idt[10] = build_idt_entry(isr10);
     idt[11] = build_idt_entry(isr11);
     idt[12] = build_idt_entry(isr12);
@@ -169,19 +172,21 @@ void init_idt() {
 
     // intialize special pointer structure
     idt_entry_ptr ptr;
-    ptr.base = (u32) &idt;
+    ptr.base = (u32)&idt;
     ptr.limit = 256 * sizeof(idt_entry) - 1;
 
-    __asm__ volatile("lidt %0" : : "m" (ptr));
+    __asm__ volatile("lidt %0" : : "m"(ptr));
 }
 
-void register_irq_handler(int irq_no, void(*handler)(registers_t registers)) {
+void register_irq_handler(int irq_no, void (*handler)(registers_t registers))
+{
     irq_handlers[irq_no] = handler;
 }
 
 void isr_handler(
     u32 edi, u32 esi, u32 ebp, u32 esp, u32 ebx, u32 edx, u32 ecx, u32 eax,
-    u32 int_no, u32 error_code, u32 eip, u32 code_segment, u32 eflags) {
+    u32 int_no, u32 error_code, u32 eip, u32 code_segment, u32 eflags)
+{
 
     registers_t registers;
     registers.edi = edi;
