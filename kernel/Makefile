@@ -1,3 +1,4 @@
+VM_MEMORY = 128M
 $(shell mkdir -p build build/drivers build/boot build/interrupts)
 C_FILES = $(wildcard src/*.c src/drivers/*.c src/interrupts/*.c)
 H_FILES = $(wildcard src/*.h src/drivers/*.h src/interrupts/*.h)
@@ -12,7 +13,7 @@ GDB = i386-elf-gdb
 # Run 32 bit machine with 128M of RAM
 .PHONY: run
 run: build/disk.img
-	qemu-system-i386 -m 128M -drive format=raw,file=build/disk.img
+	qemu-system-i386 -m $(VM_MEMORY) -drive format=raw,file=build/disk.img
 
 build/disk.img: build/boot/boot.bin build/kernel.bin scripts/flush_os_to_disk.py
 	python scripts/flush_os_to_disk.py build/disk.img build/boot/boot.bin build/kernel.bin
@@ -47,7 +48,7 @@ build/kernel.elf: linker.ld build/kernel_entry.o $(OBJ_FILES)
 .PHONY: debug
 debug: build/disk.img build/kernel.elf
 	@( \
-		qemu-system-i386 -m 128M -s -drive format=raw,file=build/disk.img & \
+		qemu-system-i386 -m $(VM_MEMORY) -s -drive format=raw,file=build/disk.img & \
 		DAEMON_PID=$$!; \
 		echo "Qemu process started as daemon PID $$DAEMON_PID"; \
 		$(GDB) -ex "target remote localhost:1234" -ex "symbol-file build/kernel.elf" -x gdb_commands.txt; \

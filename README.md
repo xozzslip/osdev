@@ -5,12 +5,9 @@ Dependencies:
 3) mtools for managing FAT32 disk images without mounting them. I use this since mounting require root permissions
 
 Install Python 3.11. Because my GDB dependant on this exact version. On my machine I do something like this in Python3.11 sources directory:
-```
+`
 ./configure --prefix="/home/khasan/code/osdev/python-3.11.9" --enable-optimizations --with-lto --with-ensurepip=upgrade --enable-shared --with-system-expat --with-system-ffi --enable-ipv6 && make -j8 && make install
-```
-I also did something like because had some error
-`ln -s libpython3.11d.so libpython3.11.so.1.0`
-
+`
 
 Run
 `source env.sh`
@@ -19,7 +16,7 @@ Run
 Memory Map:
 0x0000-0x04FF      some BIOS stuff \
 0x0500-0x6500      zeroed memory I use for passing data from bootloader to kernel (24 KiB) \
-0x6501-0x7BFF      should be usable but it is actually not writable in qemu...
+0x6501-0x7BFF      should be usable but it is actually not writable in qemu... \
 0x7C00-0x7DFF      my boot.asm (512 bytes) \
 0x07E00-0x7FFFF    memory for my kernel (480.5 KiB) \
 0x80000-0xFFFFF    some BIOS stuff (including VGA mapped memory) \
