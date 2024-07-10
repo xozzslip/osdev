@@ -38,7 +38,7 @@ build/%.bin: src/%.asm
 
 .PHONY: clean
 clean:
-	rm -rf build
+	rm -rf build/*
 
 ### Debugging ###
 build/kernel.elf: build/kernel_entry.o $(OBJ_FILES)

@@ -43,7 +43,7 @@ def check_boot_code(boot_code: bytes):
 
 def check_kernel_code(kernel_code: bytes):
     assert len(kernel_code) <= 1024 ** 2 - 512, "kernel code must have size 1MiB - 512 bytes for MBR"
-    assert len(kernel_code) < 63 * 1024, "right now we load only first 63.5 KiB of kernel code"
+    assert len(kernel_code) < 63 * 1024, "kernel is too big: right now we load only first 63.5 KiB of kernel code"
 
 def shell(command: str):
     subprocess.run(command, shell=True, check=True)

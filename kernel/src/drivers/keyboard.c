@@ -3,11 +3,11 @@
 #include "low_level.h"
 #include "screen.h"
 
-typedef struct
-{
-    char ascii;
-    bool is_pressed;  // or released
-} keypress_packet;
+// typedef struct
+// {
+//     char ascii;
+//     bool is_pressed;  // or released
+// } keypress_packet;
 
 char scancode_to_acsii(u8 scancode);
 

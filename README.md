@@ -17,12 +17,12 @@ Run
 
 
 Memory Map:
-0x0000-0x7BFF      some BIOS stuff
-0x7C00-0x7DFF      my boot.asm (512 bytes)
-0x07E00-0x7FFFF    memory for my kernel (480.5 KiB)
-0x80000-0xFFFFF    some BIOS stuff (including VGA mapped memory)
-0x100000-0x1fffff  kernel stack (1 MiB)
-0x200000-END       kernel heap
+0x0000-0x7BFF      some BIOS stuff \
+0x7C00-0x7DFF      my boot.asm (512 bytes) \
+0x07E00-0x7FFFF    memory for my kernel (480.5 KiB) \
+0x80000-0xFFFFF    some BIOS stuff (including VGA mapped memory) \
+0x100000-0x1fffff  kernel stack (1 MiB) (grows backward) \
+0x200000-END       kernel heap \
 
 
 Some links:

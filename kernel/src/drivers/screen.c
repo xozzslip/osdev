@@ -1,6 +1,9 @@
 #include "low_level.h"
 #include "screen.h"
 #include "../types.h"
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 // Miscellaneous Output Register
 // http://www.osdever.net/FreeVGA/vga/extreg.htm#3CCR3C2W
@@ -78,8 +81,21 @@ void kprint(char *string) {
     set_cursor_offset(cursor_offset);
 }
 
+void kprint_char(char ch) {
+    int cursor_offset = get_cursor_offset();
+    if (ch == '\n') {
+        int row = calc_row(cursor_offset);
+        row += 1; // new line
+        cursor_offset = row * VGA_TEXT_MAX_COLS;
+    } else {
+        print_char_at_offset(ch, VGA_TEXT_WHITE_ON_BLACK, cursor_offset);
+        cursor_offset++;
+    }
+    set_cursor_offset(cursor_offset);
+}
+
 void kprint_u32(u32 value) {
-    char s[10] = {0};
+    char s[11] = {0};
     int size = 0;
     for (int i = 0; i < 10; i++) {
         int digit = value % 10;
@@ -90,9 +106,50 @@ void kprint_u32(u32 value) {
             break;
         }
     }
-    char s2[10] = {0};
+    char s2[11] = {0};
     for (int i = 0; i < size; i++) {
         s2[i] = s[size - 1 - i];
     }
     kprint((char *) s2);
+}
+
+enum {
+    NORMAL,
+    FORMAT_SPECIFIER,
+} typedef State;
+
+
+void kprintf(const char *s, ...) {
+    va_list args; // Declaring a variable to hold the list of arguments
+
+    va_start(args, s); // Initializing args to store all arguments after 'count'
+
+    int i = 0;
+    State state = NORMAL;
+
+    while (s[i] != '\0')
+    {
+        if (state == NORMAL) {
+            if (s[i] == '%') {
+                state = FORMAT_SPECIFIER;
+            } else {
+                char ch = s[i];
+                kprint_char(s[i]);
+            }
+        } else if (state == FORMAT_SPECIFIER) {
+            switch (s[i])
+            {
+            case 'u':
+            case 'd':
+                uint32_t arg = va_arg(args, uint32_t);
+                kprint_u32(arg);
+                break;
+            default:
+                break;
+            }
+            state = NORMAL;
+        }
+        i++;
+    }
+    va_end(args); // Cleaning up the list
 }
