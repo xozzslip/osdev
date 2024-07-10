@@ -39,6 +39,7 @@ def check_disk_mbr(mbr: bytes):
 def check_boot_code(boot_code: bytes):
     assert boot_code[-2:] == bytes.fromhex("55AA")
     assert boot_code[446:-2] == bytes([0] * 64), "boot code must contain zeros in the place for partition table"
+    assert len(boot_code) == 512, "boot code must be 512 bytes long"
 
 
 def check_kernel_code(kernel_code: bytes):

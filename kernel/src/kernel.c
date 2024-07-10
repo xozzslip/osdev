@@ -7,22 +7,24 @@
 #include <stddef.h>
 #include <stdarg.h>
 
-void dummy() {
-    dummy();  // do not enter there accidentelly
+void dummy()
+{
+    dummy(); // do not enter there accidentelly
     // purpose of this function is to be forced to
     // call main instead of jumping into this file
 }
 
-u32 timer_called = 0 ;
+u32 timer_called = 2;
+u32 xui[1000];
 
-void timer_callback(registers_t registers) {
+void timer_callback(registers_t registers)
+{
     return;
 }
 
-int main() {
+int main()
+{
     // ospin_wait();
-    int x = 10;
-    kprint_u32(x);
     init_idt();
     init_timer(1);
     register_irq_handler(0, timer_callback);
@@ -34,10 +36,16 @@ int main() {
     kprint("xli na\njui dva\nememabcde12345");
     kprint("000000\n");
     setup_kernel_heap();
-    kprintf("hello pidor %d dada\n", 2102);
+    for (int i = 0; i < 10; i++)
+    {
+        kprintf("%d ", timer_called);
+        timer_called += 1;
+    }
+    kprintf("\n");
 
-    for(;;) {
-        asm("hlt");
+    for (;;)
+    {
+        asm volatile("hlt");
     }
     return 0;
 }

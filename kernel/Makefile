@@ -14,18 +14,18 @@ GDB = i386-elf-gdb
 run: build/disk.img
 	qemu-system-i386 -m 128M -drive format=raw,file=build/disk.img
 
-build/disk.img: build/boot/boot.bin build/kernel.bin
-	python scripts/flush_os_to_disk.py $@ $^
+build/disk.img: build/boot/boot.bin build/kernel.bin scripts/flush_os_to_disk.py
+	python scripts/flush_os_to_disk.py build/disk.img build/boot/boot.bin build/kernel.bin
 
 .PHONY: build
-build: build/disk.img
+build: build/disk.img build/kernel.elf
 
 .PHONY: disasm
 disasm: build/kernel.elf
 	objdump -d -M intel $<
 
-build/kernel.bin: build/kernel_entry.o $(OBJ_FILES)
-	$(LD) $^ -o $@ -Ttext 0x7E00 --oformat binary
+build/kernel.bin: linker.ld build/kernel_entry.o $(OBJ_FILES)
+	$(LD) build/kernel_entry.o $(OBJ_FILES) -o $@ -T linker.ld --oformat binary
 
 build/%.o: src/%.c $(H_FILES)
 	$(CC) -Werror -O0 -g -ffreestanding -c $< -o $@
@@ -41,8 +41,8 @@ clean:
 	rm -rf build/*
 
 ### Debugging ###
-build/kernel.elf: build/kernel_entry.o $(OBJ_FILES)
-	$(LD) $^ -o $@ -Ttext 0x7E00
+build/kernel.elf: linker.ld build/kernel_entry.o $(OBJ_FILES)
+	$(LD) build/kernel_entry.o $(OBJ_FILES) -o $@ -T linker.ld -Map=build/linker.map
 
 .PHONY: debug
 debug: build/disk.img build/kernel.elf

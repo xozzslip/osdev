@@ -17,7 +17,9 @@ Run
 
 
 Memory Map:
-0x0000-0x7BFF      some BIOS stuff \
+0x0000-0x04FF      some BIOS stuff \
+0x0500-0x6500      zeroed memory I use for passing data from bootloader to kernel (24 KiB) \
+0x6501-0x7BFF      should be usable but it is actually not writable in qemu...
 0x7C00-0x7DFF      my boot.asm (512 bytes) \
 0x07E00-0x7FFFF    memory for my kernel (480.5 KiB) \
 0x80000-0xFFFFF    some BIOS stuff (including VGA mapped memory) \
