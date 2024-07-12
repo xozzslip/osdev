@@ -24,13 +24,15 @@ struct AddressRangeDescriptor {
 } __attribute__((packed));
 typedef struct AddressRangeDescriptor AddressRangeDescriptor;
 
-typedef struct {
+struct ChunkHeader {
     size_t size;
     void* start;
-    ChunkHeader* next;
-    ChunkHeader* prev;
+    struct ChunkHeader* next;
+    struct ChunkHeader* prev;
     char magic[4];
-} ChunkHeader;
+};
+typedef struct ChunkHeader ChunkHeader;
+
 
 ChunkHeader* root;
 
@@ -95,7 +97,8 @@ void* malloc(size_t requested_size)
     size_t size = requested_size + sizeof(ChunkHeader);
     ChunkHeader* cur = root;
     while (cur != NULL && cur->size < size) {
-        cur = cur->next;
+        ChunkHeader* next = cur->next;
+        cur = next;
     }
     if (cur == NULL) {
         return NULL;

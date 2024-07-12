@@ -22,7 +22,7 @@ _zero_next_byte:
     mov byte [es:di], 0  ; store 0 ES:DI (0x1000:0x0050)
     inc di
     cmp di, 0x6500
-    jne _zero_nextqq_byte
+    jne _zero_next_byte
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

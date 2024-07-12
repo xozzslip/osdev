@@ -1,5 +1,6 @@
 #if !defined(INTERRUPTS_H)
 #define INTERRUPTS_H
+#include "../types.h"
 void init_idt();
 struct registers_t {
     u32 edi;
