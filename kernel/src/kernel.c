@@ -2,6 +2,7 @@
 #include "drivers/low_level.h"
 #include "drivers/screen.h"
 #include "drivers/timer.h"
+#include "drivers/serial.h"
 #include "interrupts/interrupts.h"
 #include "memory.h"
 #include <stdarg.h>
@@ -41,7 +42,17 @@ int main()
         timer_called += 1;
     }
     kprintf("\n");
+    init_serial();
+    write_serial('x');
+    write_serial('y');
+    write_serial('z');
+    kprintf("OK serial sended\n");
+    for (;;) {
+        uint8_t a = read_serial();
+        kprint_char(a);
 
+
+    }
     for (;;) {
         asm volatile("hlt");
     }

@@ -13,7 +13,7 @@ GDB = i386-elf-gdb
 # Run 32 bit machine with 128M of RAM
 .PHONY: run
 run: build/disk.img
-	qemu-system-i386 -m $(VM_MEMORY) -drive format=raw,file=build/disk.img
+	qemu-system-i386 -m $(VM_MEMORY) -drive format=raw,file=build/disk.img -serial mon:stdio
 
 build/disk.img: build/boot/boot.bin build/kernel.bin scripts/flush_os_to_disk.py
 	python scripts/flush_os_to_disk.py build/disk.img build/boot/boot.bin build/kernel.bin

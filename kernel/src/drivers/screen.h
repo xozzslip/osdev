@@ -6,3 +6,4 @@ void print_char_at_offset(char, char, unsigned short);
 void kprint(char*);
 void kprint_u32(u32);
 void kprintf(const char* s, ...);
+void kprint_char(char ch);
