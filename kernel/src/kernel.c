@@ -25,11 +25,13 @@ void timer_callback(registers_t registers)
 
 int main()
 {
-    // ospin_wait();
+
+
     init_idt();
     init_timer(1);
+    init_serial();
+    write_serial_str("Kernel is initializing...\n");
     register_irq_handler(0, timer_callback);
-
     register_irq_handler(1, keyboard_callback);
     asm volatile("sti");
     // char *video_memory = (char *) (0xb8000 + 2 * (14 * 80 + 2));
@@ -42,17 +44,10 @@ int main()
         timer_called += 1;
     }
     kprintf("\n");
-    init_serial();
-    write_serial('x');
-    write_serial('y');
-    write_serial('z');
-    kprintf("OK serial sended\n");
-    for (;;) {
-        uint8_t a = read_serial();
-        kprint_char(a);
 
-
-    }
+    write_serial_str("Kernel was initialized successfully!\n");
+    // int x = 0;
+    // int y = 10 / x;
     for (;;) {
         asm volatile("hlt");
     }

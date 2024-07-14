@@ -2,6 +2,7 @@
 #include "low_level.h"
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
 
 #define PORT 0x3f8 // COM1
 
@@ -45,10 +46,28 @@ bool is_transmit_empty()
     return inb(PORT + 5) & 0x20;
 }
 
-void write_serial(uint8_t a)
+void write_serial_byte(uint8_t a)
 {
     while (is_transmit_empty() == 0) {
         // spinwait
     }
     outb(PORT, a);
+}
+
+
+void write_serial(char *s, size_t size) {
+    for (int i = 0; i < size; i++) {
+        write_serial_byte(s[i]);
+    }
+}
+
+void write_serial_str(const char *s) {
+    int i = 0;
+    while (true) {
+        write_serial_byte(s[i]);
+        if (s[i] == '\0') {
+            break;
+        }
+        i++;
+    }
 }
