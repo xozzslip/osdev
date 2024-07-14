@@ -34,12 +34,12 @@ if __name__ == "__main__":
         elif init_messages == 1 and success_messages == 0:
             if passed > 1:
                 print(content)
-                print(f"\033[31mFAILED\033[0m: kernel successfull log didn't appear in {passed:.1f}s while init log appeared")
+                print(f"\033[31mFAILED\033[0m: kernel initialization failed: success log didn't appear in {passed:.1f}s while init log appeared")
                 exit(1)
         elif init_messages == 0 and success_messages == 0:
             if passed > 1:
                 print(content)
-                print(f"\033[31mFAILED\033[0m: kernel log didn't appear in {passed:.1f}s")
+                print(f"\033[31mFAILED\033[0m: kernel init log didn't appear {passed:.1f}s")
                 exit(1)
         elif init_messages > 1 and success_messages > 1:
             print(content)

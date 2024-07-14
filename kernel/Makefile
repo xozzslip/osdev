@@ -21,12 +21,10 @@ test: build/disk.img
 		rm -f build/kernel.log ; \
 		$(QEMU) -display none -serial stdio >> build/kernel.log & \
 		DAEMON_PID=$$! ; \
-		echo "Qemu process started as daemon PID $$DAEMON_PID" ; \
+		echo "Qemu process started as daemon PID $$DAEMON_PID, listening serial port:" ; \
 		python scripts/check_kernel_logs.py build/kernel.log ; \
 		kill -9 $$DAEMON_PID; \
 	)
-
-
 
 build/disk.img: build/boot/boot.bin build/kernel.bin scripts/flush_os_to_disk.py
 	python scripts/flush_os_to_disk.py build/disk.img build/boot/boot.bin build/kernel.bin

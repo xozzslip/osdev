@@ -64,6 +64,7 @@ size_t read_memory_size()
 
 void setup_kernel_heap()
 {
+    assert_memory((void *) 0x590, (void *) 0x6F00, 0x0);
     size_t total_memory = read_memory_size();
     kprintf("available memory %uMiB\n", total_memory / 1024 / 1024);
 

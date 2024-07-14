@@ -1,8 +1,8 @@
 #include "drivers/keyboard.h"
 #include "drivers/low_level.h"
 #include "drivers/screen.h"
-#include "drivers/timer.h"
 #include "drivers/serial.h"
+#include "drivers/timer.h"
 #include "interrupts/interrupts.h"
 #include "memory.h"
 #include <stdarg.h>
@@ -25,8 +25,6 @@ void timer_callback(registers_t registers)
 
 int main()
 {
-
-
     init_idt();
     init_timer(1);
     init_serial();
