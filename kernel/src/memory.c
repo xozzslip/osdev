@@ -175,9 +175,7 @@ void run_tests()
     void* p1 = malloc(3000);
     void* p2 = malloc(1000);
     kprintf("p1=%d p2=%d p2-p1=%d\n", p1, p2, p2-p1);
-    assert((p2-p1) >= 3000, "PANIC malloc test: p2 - p1 >= 3000");
-
-
+    assert((p2-p1) >= 3000);
 
     free(p1);
     void* p3 = malloc(100);
@@ -185,8 +183,15 @@ void run_tests()
     void* p5 = malloc(2700);
 
     kprintf("p3=%d\n", p3);
-    assert(p3 == p1, "PANIC malloc test: p3 == p1");
-    assert(p5 == (p2 + 1000), "PANIC malloc test");
+    assert(p3 == p1);
+    assert(p5 > (p2 + 1000));
 
+    free(p2);
+    free(p3);
+    free(p4);
+    kprintf(__func__);
 
+    void *p6 = malloc(5000);
+    void *p7 = malloc(4000);
+    assert(p7 == p1);
 }
