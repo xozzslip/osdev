@@ -5,7 +5,8 @@
 #include "drivers/timer.h"
 #include "interrupts/interrupts.h"
 #include "memory.h"
-#include "utils.h"
+#include "libk/assert.h"
+#include "libk/log.h"
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdbool.h>
@@ -44,6 +45,13 @@ int main()
         timer_called += 1;
     }
     kprintf("\n");
+    uint8_t a = 10;
+    uint8_t b = 11;
+    uint8_t c = 12;
+    int8_t d = -13;
+
+    kprintf("hello xui: %d %d %d %d\n", a, b, c, d);
+
 
     write_serial_str("Kernel was initialized successfully!\n");
     // int x = 0;

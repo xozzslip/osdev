@@ -1,5 +1,6 @@
-#include "../utils.h"
 #include "low_level.h"
+#include "../libk/assert.h"
+#include "../libk/log.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -20,7 +21,8 @@ void init_serial()
 
     // Check if serial is faulty (i.e: not same byte as sent)
     if (inb(PORT + 0) != 0xAE) {
-        panic("PANIC faulty serial port: loopback check failed\n");
+        klog(FATAL, "faulty serial port: loopback check failed\n");
+        panic();
     }
 
     // If serial is not faulty set it in normal operation mode

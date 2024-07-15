@@ -1,10 +1,10 @@
+#include "drivers/screen.h"
+#include "libk/assert.h"
+#include "libk/log.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-
-#include "drivers/screen.h"
-#include "utils.h"
 
 void run_tests();
 
@@ -33,8 +33,8 @@ void assert_memory(void* from, void* to, uint8_t value)
     uint8_t* b = (uint8_t*)from;
     while (b != (uint8_t*)to) {
         if (*b != value) {
-            panic("PANIC address=%u value=%u expected=%u\n", (uint32_t)b, (*b),
-                value);
+            klog(FATAL, "address=%u value=%u expected=%u\n", (uint32_t)b, (*b), value);
+            panic();
         }
         b++;
     }
@@ -69,15 +69,18 @@ void setup_kernel_heap()
     kprintf("available memory %uMiB\n", total_memory / 1024 / 1024);
 
     if (total_memory < KERNEL_HEAP_LIMIT) {
-        panic("PANIC not enough memory to allocate kernel heap!");
+        klog(FATAL, "not enough memory to allocate kernel heap!");
+        panic();
     }
     if (KERNEL_HEAP_LIMIT % CHUNK_SIZE != 0) {
-        panic("PANIC kernel heap limit must be dividable by CHUNK_SIZE");
+        klog(FATAL, "kernel heap limit must be dividable by CHUNK_SIZE");
+        panic();
     }
     size_t total_chunks_count = KERNEL_HEAP_LIMIT / CHUNK_SIZE;
     size_t metadata_size = total_chunks_count * 1; // each chunk consume 1 byte
     if (metadata_size > KERNEL_HEAP_LIMIT) {
-        panic("PANIC not enough memory to write memory metadata to kernel heap!");
+        klog(FATAL, "not enough memory to write memory metadata to kernel heap!");
+        panic();
     }
     size_t chunks_used_by_metadata = (metadata_size + CHUNK_SIZE - 1) / CHUNK_SIZE;
     kprintf("used %d\n", chunks_used_by_metadata);
@@ -128,10 +131,12 @@ void* malloc(size_t requested_size)
         i = j + 1;
     }
     if (!found) {
-        panic("PANIC failed to allocate enough memory");
+        klog(FATAL, "failed to allocate enough memory");
+        panic();
     }
     if (j - i + 1 > requested_chunks) {
-        panic("PANIC bug in malloc: callocated more than requested\n");
+        klog(FATAL, "bug in malloc: callocated more than requested\n");
+        panic();
     }
     for (uint32_t k = 0; k < requested_chunks; k++) {
         is_free_table[i + k] = false;
@@ -154,10 +159,12 @@ void free(void* p)
 
     AllocationHeader* header = (AllocationHeader*)allocated;
     if ((uint32_t)allocated % CHUNK_SIZE != 0) {
-        panic("PANIC failed to free pointer %d: pointer is not aligned to CHUNK_SIZE");
+        klog(FATAL, "failed to free pointer %d: pointer is not aligned to CHUNK_SIZE");
+        panic();
     }
     if (header->start != p) {
-        panic("PANIC failed to free pointer %d: allocation header was not found", p);
+        klog(FATAL, "failed to free pointer %d: allocation header was not found", p);
+        panic();
     }
     uint32_t i = (uint32_t)(allocated - KERNEL_HEAP_START) / CHUNK_SIZE;
     uint32_t j = i + header->allocated_chunks;
@@ -174,8 +181,8 @@ void run_tests()
 {
     void* p1 = malloc(3000);
     void* p2 = malloc(1000);
-    kprintf("p1=%d p2=%d p2-p1=%d\n", p1, p2, p2-p1);
-    assert((p2-p1) >= 3000);
+    kprintf("p1=%d p2=%d p2-p1=%d\n", p1, p2, p2 - p1);
+    assert((p2 - p1) >= 3000);
 
     free(p1);
     void* p3 = malloc(100);
@@ -189,9 +196,8 @@ void run_tests()
     free(p2);
     free(p3);
     free(p4);
-    kprintf(__func__);
 
-    void *p6 = malloc(5000);
-    void *p7 = malloc(4000);
+    void* p6 = malloc(5000);
+    void* p7 = malloc(4000);
     assert(p7 == p1);
 }
