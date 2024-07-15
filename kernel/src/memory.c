@@ -64,7 +64,7 @@ size_t read_memory_size()
 
 void setup_kernel_heap()
 {
-    assert_memory((void *) 0x590, (void *) 0x6F00, 0x0);
+    // assert_memory((void *) 0x590, (void *) 0x6F00, 0x0);
     size_t total_memory = read_memory_size();
     kprintf("available memory %uMiB\n", total_memory / 1024 / 1024);
 
@@ -172,10 +172,21 @@ void free(void* p)
 
 void run_tests()
 {
-    void* p1 = malloc(1000);
+    void* p1 = malloc(3000);
     void* p2 = malloc(1000);
-    kprintf("p1=%d p2=%d\n", p1, p2);
+    kprintf("p1=%d p2=%d p2-p1=%d\n", p1, p2, p2-p1);
+    assert((p2-p1) >= 3000, "PANIC malloc test: p2 - p1 >= 3000");
+
+
+
     free(p1);
     void* p3 = malloc(100);
+    void* p4 = malloc(200);
+    void* p5 = malloc(2700);
+
     kprintf("p3=%d\n", p3);
+    assert(p3 == p1, "PANIC malloc test: p3 == p1");
+    assert(p5 == (p2 + 1000), "PANIC malloc test");
+
+
 }

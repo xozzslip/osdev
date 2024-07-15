@@ -3,6 +3,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define assert2(a) (assert_f((a), "panic"))
+
 #include "drivers/screen.h"
 void panic(const char* s, ...)
 {
@@ -17,7 +19,7 @@ void panic(const char* s, ...)
 
 void assert(const bool assertion, const char* s, ...)
 {
-    if (assertion) {
+    if (!assertion) {
         va_list args;
         va_start(args, s);
         kprintf(s, args);
