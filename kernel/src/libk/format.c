@@ -67,14 +67,17 @@ enum {
     FORMAT_SPECIFIER,
 } typedef State;
 
-void format_and_write(bool (*write_byte)(char), char* format, ...)
+void format_and_write(bool (*write_byte)(char), char* format, va_list args)
 {
-    va_list args;
-    va_start(args, format);
     int i = 0;
     State state = NORMAL;
     bool write_is_ok = true;
     char* s = format;
+    char c[20];
+
+    uint32_t unsigned_value;
+    int32_t signed_value;
+    char* str_value;
 
     while (s[i] != '\0' && write_is_ok) {
         if (state == NORMAL) {
@@ -86,22 +89,29 @@ void format_and_write(bool (*write_byte)(char), char* format, ...)
             }
         } else if (state == FORMAT_SPECIFIER) {
             char* value; // stringified value
-            char c[20] = { 0 }; // big enough container for any stringified number
+            for (int m = 0; m < 20; m++) {
+                c[m] = 0;
+            }
+
             switch (s[i]) {
             case 'u':
-                uint_to_str(va_arg(args, uint32_t), c);
+                unsigned_value = va_arg(args, uint32_t);
+                uint_to_str(unsigned_value, c);
                 value = c;
                 break;
             case 'd':
-                int_to_str(va_arg(args, int32_t), c);
+                signed_value = va_arg(args, int32_t);
+                int_to_str(signed_value, c);
                 value = c;
                 break;
             case 'x':
-                uint_to_hex(va_arg(args, uint32_t), c);
+                unsigned_value = va_arg(args, uint32_t);
+                uint_to_hex(unsigned_value, c);
                 value = c;
                 break;
             case 's':
-                value = va_arg(args, char*);
+                str_value = va_arg(args, char*);
+                value = str_value;
                 break;
             default:
                 break;
@@ -130,14 +140,16 @@ bool _serial_write_byte(char c)
     return true;
 }
 
-void format_and_write_to_vga_text(char *format, ...) {
+void format_and_write_to_vga_text(char* format, ...)
+{
     va_list args;
     va_start(args, format);
     format_and_write(_vga_text_write_byte, format, args);
     va_end(args);
 }
 
-void format_and_write_to_serial_port(char *format, ...) {
+void format_and_write_to_serial_port(char* format, ...)
+{
     va_list args;
     va_start(args, format);
     format_and_write(_serial_write_byte, format, args);

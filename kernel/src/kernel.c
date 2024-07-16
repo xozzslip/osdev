@@ -26,12 +26,19 @@ void timer_callback(registers_t registers)
     return;
 }
 
+bool write_x(char c) {
+    vga_text_write_byte(c, VGA_TEXT_WHITE_ON_BLACK);
+    return true;
+}
+
 int main()
 {
     init_serial();
     init_idt();
     init_timer(1);
+    uint32_t a = 30;
     klog(INFO, "kernel is initializing...");
+
     register_irq_handler(0, timer_callback);
     register_irq_handler(1, keyboard_callback);
     asm volatile("sti");
@@ -41,10 +48,6 @@ int main()
     for (int i = 0; i < 10; i++) {
         timer_called += 1;
     }
-    uint8_t a = 10;
-    uint8_t b = 11;
-    uint8_t c = 12;
-    int8_t d = -13;
     klog(INFO, "kernel was initialized successfully!");
     panic();
 

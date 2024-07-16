@@ -20,8 +20,8 @@ if __name__ == "__main__":
                 content = content[:-1]
             if content[-1] == "\n":
                 content = content[:-1]
-        success_messages = content.count("Kernel was initialized successfully!")
-        init_messages = content.count("Kernel is initializing...")
+        success_messages = content.count("kernel was initialized successfully!")
+        init_messages = content.count("kernel is initializing...")
         if init_messages == 1 and success_messages == 1:
             if passed > 0.3:
                 print(content)

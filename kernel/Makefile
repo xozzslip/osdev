@@ -13,7 +13,7 @@ QEMU = qemu-system-i386 -m 128M -drive format=raw,file=build/disk.img
 # Run 32 bit machine with 128M of RAM
 .PHONY: run
 run: build/disk.img
-	$(QEMU)
+	$(QEMU) -serial stdio
 
 .PHONY: test
 test: build/disk.img
@@ -22,7 +22,7 @@ test: build/disk.img
 		$(QEMU) -display none -serial stdio >> build/kernel.log & \
 		DAEMON_PID=$$! ; \
 		echo "Qemu process started as daemon PID $$DAEMON_PID, listening serial port:" ; \
-		python scripts/check_kernel_logs.py build/kernel.log ; \
+		python scripts/inspect_kernel_logs.py build/kernel.log ; \
 		kill -9 $$DAEMON_PID; \
 	)
 
@@ -59,7 +59,7 @@ build/kernel.elf: linker.ld build/kernel_entry.o $(OBJ_FILES)
 .PHONY: debug
 debug: build/disk.img build/kernel.elf
 	@( \
-		$(QEMU) -s & \
+		$(QEMU) -display none -s & \
 		DAEMON_PID=$$!; \
 		echo "Qemu process started as daemon PID $$DAEMON_PID"; \
 		$(GDB) -ex "target remote localhost:1234" -ex "symbol-file build/kernel.elf" -x gdb_commands.txt; \
