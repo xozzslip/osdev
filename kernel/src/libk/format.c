@@ -3,6 +3,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "../drivers/screen.h"
+#include "../drivers/serial.h"
+
 void int_to_str(int32_t value, char* str)
 {
     char* ptr = str;
@@ -112,4 +115,31 @@ void format_and_write(bool (*write_byte)(char), char* format, ...)
         i++;
     }
     va_end(args); // Cleaning up the list
+}
+
+bool _vga_text_write_byte(char c)
+{
+    char white_on_black = 0x0F;
+    vga_text_write_byte(c, white_on_black);
+    return true;
+}
+
+bool _serial_write_byte(char c)
+{
+    serial_write_byte(c);
+    return true;
+}
+
+void format_and_write_to_vga_text(char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    format_and_write(_vga_text_write_byte, format, args);
+    va_end(args);
+}
+
+void format_and_write_to_serial_port(char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    format_and_write(_serial_write_byte, format, args);
+    va_end(args);
 }

@@ -28,37 +28,25 @@ void timer_callback(registers_t registers)
 
 int main()
 {
+    init_serial();
     init_idt();
     init_timer(1);
-    init_serial();
-    write_serial_str("Kernel is initializing...\n");
+    klog(INFO, "kernel is initializing...");
     register_irq_handler(0, timer_callback);
     register_irq_handler(1, keyboard_callback);
     asm volatile("sti");
     // char *video_memory = (char *) (0xb8000 + 2 * (14 * 80 + 2));
     // *video_memory = 'Z';
-    kprint("xli na\njui dva\nememabcde12345");
-    kprint("000000\n");
     setup_kernel_heap();
     for (int i = 0; i < 10; i++) {
-        kprintf("%d ", timer_called);
         timer_called += 1;
     }
-    kprintf("\n");
     uint8_t a = 10;
     uint8_t b = 11;
     uint8_t c = 12;
     int8_t d = -13;
-
-    kprintf("hello xui: %d %d %d %d\n", a, b, c, d);
-
-
-    write_serial_str("Kernel was initialized successfully!\n");
-    // int x = 0;
-    // int y = 10 / x;
-
-    klog(INFO, "xui %d", 30);
-
+    klog(INFO, "kernel was initialized successfully!");
+    panic();
 
     for (;;) {
         asm volatile("hlt");

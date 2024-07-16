@@ -33,7 +33,7 @@ void assert_memory(void* from, void* to, uint8_t value)
     uint8_t* b = (uint8_t*)from;
     while (b != (uint8_t*)to) {
         if (*b != value) {
-            klog(FATAL, "address=%u value=%u expected=%u\n", (uint32_t)b, (*b), value);
+            klog(FATAL, "address=%u value=%u expected=%u", (uint32_t)b, (*b), value);
             panic();
         }
         b++;
@@ -66,7 +66,7 @@ void setup_kernel_heap()
 {
     // assert_memory((void *) 0x590, (void *) 0x6F00, 0x0);
     size_t total_memory = read_memory_size();
-    kprintf("available memory %uMiB\n", total_memory / 1024 / 1024);
+    klog(DEBUG, "available memory %uMiB", total_memory / 1024 / 1024);
 
     if (total_memory < KERNEL_HEAP_LIMIT) {
         klog(FATAL, "not enough memory to allocate kernel heap!");
@@ -83,7 +83,7 @@ void setup_kernel_heap()
         panic();
     }
     size_t chunks_used_by_metadata = (metadata_size + CHUNK_SIZE - 1) / CHUNK_SIZE;
-    kprintf("used %d\n", chunks_used_by_metadata);
+    klog(DEBUG, "used %d", chunks_used_by_metadata);
     bool* is_free_table = (bool*)KERNEL_HEAP_START;
     for (uint32_t chunk_no = 0; chunk_no < total_chunks_count; chunk_no++) {
         if (chunk_no < chunks_used_by_metadata) {
@@ -135,7 +135,7 @@ void* malloc(size_t requested_size)
         panic();
     }
     if (j - i + 1 > requested_chunks) {
-        klog(FATAL, "bug in malloc: callocated more than requested\n");
+        klog(FATAL, "bug in malloc: callocated more than requested");
         panic();
     }
     for (uint32_t k = 0; k < requested_chunks; k++) {
@@ -168,7 +168,7 @@ void free(void* p)
     }
     uint32_t i = (uint32_t)(allocated - KERNEL_HEAP_START) / CHUNK_SIZE;
     uint32_t j = i + header->allocated_chunks;
-    kprintf("freeing p=%d chunks=%d-%d\n", allocated, i, j);
+    klog(DEBUG, "freeing p=%d chunks=%d-%d", allocated, i, j);
     bool* is_free_table = (bool*)KERNEL_HEAP_START;
     for (uint32_t k = i; k <= j; k++) {
         is_free_table[k] = true;
@@ -181,7 +181,7 @@ void run_tests()
 {
     void* p1 = malloc(3000);
     void* p2 = malloc(1000);
-    kprintf("p1=%d p2=%d p2-p1=%d\n", p1, p2, p2 - p1);
+    klog(DEBUG, "p1=%d p2=%d p2-p1=%d", p1, p2, p2 - p1);
     assert((p2 - p1) >= 3000);
 
     free(p1);
@@ -189,7 +189,7 @@ void run_tests()
     void* p4 = malloc(200);
     void* p5 = malloc(2700);
 
-    kprintf("p3=%d\n", p3);
+    klog(DEBUG, "p3=%d", p3);
     assert(p3 == p1);
     assert(p5 > (p2 + 1000));
 

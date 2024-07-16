@@ -7,7 +7,7 @@
 
 #define PORT 0x3f8 // COM1
 
-void init_serial()
+bool init_serial()
 {
     outb(PORT + 1, 0x00); // Disable all interrupts
     outb(PORT + 3, 0x80); // Enable DLAB (set baud rate divisor)
@@ -21,13 +21,12 @@ void init_serial()
 
     // Check if serial is faulty (i.e: not same byte as sent)
     if (inb(PORT + 0) != 0xAE) {
-        klog(FATAL, "faulty serial port: loopback check failed\n");
-        panic();
+        return false;
     }
-
     // If serial is not faulty set it in normal operation mode
     // (not-loopback with IRQs enabled and OUT#1 and OUT#2 bits enabled)
     outb(PORT + 4, 0x0F);
+    return true;
 }
 
 bool serial_received()
@@ -35,7 +34,7 @@ bool serial_received()
     return inb(PORT + 5) & 1;
 }
 
-uint8_t read_serial()
+char serial_read_byte()
 {
     while (serial_received() == 0) {
         // spinwait
@@ -48,28 +47,10 @@ bool is_transmit_empty()
     return inb(PORT + 5) & 0x20;
 }
 
-void write_serial_byte(uint8_t a)
+void serial_write_byte(char a)
 {
     while (is_transmit_empty() == 0) {
         // spinwait
     }
     outb(PORT, a);
-}
-
-
-void write_serial(char *s, size_t size) {
-    for (int i = 0; i < size; i++) {
-        write_serial_byte(s[i]);
-    }
-}
-
-void write_serial_str(const char *s) {
-    int i = 0;
-    while (true) {
-        write_serial_byte(s[i]);
-        if (s[i] == '\0') {
-            break;
-        }
-        i++;
-    }
 }

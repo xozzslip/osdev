@@ -2,6 +2,7 @@
 #include "../drivers/low_level.h"
 #include "../drivers/screen.h"
 #include "../types.h"
+#include "../libk/log.h"
 
 extern void isr0();
 extern void isr1();
@@ -207,23 +208,11 @@ void isr_handler(
         if (handler != 0) {
             handler(registers);
         } else {
-            kprint("unhandled IRQ: ");
-            kprint("IRQ_NO=");
-            kprint_u32(irq_no);
-            kprint(" EIP=");
-            kprint_u32(eip);
-            kprint("\n");
+            klog(WARNING, "unhandled IRQ=%u EIP=%u", irq_no, eip);
         }
         send_eoi_pic(irq_no);
     } else {
-        kprint("unhandled interrupt: ");
-        kprint("INT_NO=");
-        kprint_u32(int_no);
-        kprint(" ERROR_CODE=");
-        kprint_u32(error_code);
-        kprint(" EIP=");
-        kprint_u32(eip);
-        kprint("\n");
+        klog(WARNING, "unhandled interrupt INT=%u ERROR=%u EIP=%u", int_no, error_code, eip);
     }
     return;
 }

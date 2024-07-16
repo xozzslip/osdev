@@ -16,8 +16,8 @@ void keyboard_callback(registers_t register)
     u8 scancode = inb(0x60);
     char symbol = scancode_to_acsii(scancode);
     if (symbol != 0) {
-        char s[2] = { symbol, 0 };
-        kprint((char*)s);
+        vga_text_write_byte(symbol, VGA_TEXT_WHITE_ON_BLACK);
+
     }
 }
 
