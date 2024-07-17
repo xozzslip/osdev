@@ -15,7 +15,6 @@
 #define VGA_IDX_CRT_CURSOR_LOW 0xF
 
 // Memory mapped VGA text mode
-#define VGA_TEXT_ADDRESS 0xB8000
 #define VGA_TEXT_MAX_ROWS 25
 #define VGA_TEXT_MAX_COLS 80
 

@@ -1,30 +1,26 @@
+#ifndef PROCESS_H
+#define PROCESS_H
+
 #include <stdint.h>
 
 enum {
     SCREEN_BUFFER_CHANGED,
-
 } typedef KernelEventType;
 
-struct {
+typedef struct {
     KernelEventType type;
-    uint8_t *data;
-} typedef KernelEventHeader;
+    uint8_t* data;
+} KernelEventHeader;
 
-enum {
-    SCREEN_BUFFER_CHANGED,
-} typedef ApplicationEventType;
-
-struct {
-    ApplicationEventHeader type;
-    uint8_t *data;
-} typedef ApplicationEventHeader;
-
-struct {
+typedef struct {
     uint32_t width;
     uint32_t height;
-    uint16_t *buffer;
-} typedef ScreenBuffer;
+    uint8_t* buffer;
+} ScreenBuffer;
 
-struct {
+typedef struct {
+    uint32_t id;
+    ScreenBuffer *screen_buffer;
+} Process;
 
-} typedef ProcessInitParams;
+#endif // PROCESS_H

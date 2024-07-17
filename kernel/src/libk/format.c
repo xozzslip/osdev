@@ -113,6 +113,11 @@ void format_and_write(bool (*write_byte)(char), char* format, va_list args)
                 str_value = va_arg(args, char*);
                 value = str_value;
                 break;
+            case 'c':
+                unsigned_value = va_arg(args, uint32_t);
+                write_is_ok = write_byte((uint8_t) unsigned_value);
+                value = "\0";
+                break;
             default:
                 break;
             }

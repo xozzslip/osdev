@@ -1,6 +1,6 @@
-#include "drivers/screen.h"
-#include "libk/assert.h"
-#include "libk/log.h"
+#include "../drivers/screen.h"
+#include "assert.h"
+#include "log.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -26,7 +26,7 @@ struct AddressRangeDescriptor {
 } __attribute__((packed));
 typedef struct AddressRangeDescriptor AddressRangeDescriptor;
 
-void assert_memory(void* from, void* to, uint8_t value)
+void assert_memorny(void* from, void* to, uint8_t value)
 {
     // usage example: check that memory is zeroed
     // assert_memory((void *) 0x590, (void *) 0x6F00, 0x0);

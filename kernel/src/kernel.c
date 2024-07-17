@@ -7,9 +7,12 @@
 #include "libk/assert.h"
 #include "libk/log.h"
 #include "libk/memory.h"
+#include "libk/process.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
+
+#include "userspace/screensaver.h"
 
 void dummy()
 {
@@ -18,34 +21,50 @@ void dummy()
              // call main instead of jumping into this file
 }
 
-u32 timer_called = 2;
-u32 xui[1000];
+Process* processes;
 
 void timer_callback(registers_t registers)
 {
+    uint8_t* vga = (uint8_t*)VGA_TEXT_ADDRESS;
+    for (int j = 0; j < 25 * 80 * 2; j++) {
+        vga[j] = processes[0].screen_buffer->buffer[j];
+    }
     return;
 }
 
 int main()
 {
+    /*
+        kernel initialization
+    */
     init_serial();
+    klog(INFO, "kernel is initializing...");
     init_idt();
     init_timer(1);
-    uint32_t a = 30;
-    klog(INFO, "kernel is initializing...");
-
     register_irq_handler(0, timer_callback);
     register_irq_handler(1, keyboard_callback);
     asm volatile("sti");
-    // char *video_memory = (char *) (0xb8000 + 2 * (14 * 80 + 2));
-    // *video_memory = 'Z';
     setup_kernel_heap();
-    for (int i = 0; i < 10; i++) {
-        timer_called += 1;
-    }
+    processes = malloc(sizeof(Process) * 10);
     klog(INFO, "kernel was initialized successfully!");
 
-    // process management
+    /*
+        start first process
+    */
+    ScreenBuffer* screen = malloc(sizeof(ScreenBuffer));
+    screen->width = 80;
+    screen->height = 25;
+    screen->buffer = (uint8_t*)malloc(80 * 25 * 2);
+    KernelEventHeader event = {
+        .data = (uint8_t*)screen,
+        .type = SCREEN_BUFFER_CHANGED,
+    };
+    processes[0].screen_buffer = screen;
+    processes[0].id = 1;
+    plistener(event);
+    pmain();
+
+
 
 
     for (;;) {
