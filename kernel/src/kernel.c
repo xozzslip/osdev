@@ -4,12 +4,12 @@
 #include "drivers/serial.h"
 #include "drivers/timer.h"
 #include "interrupts/interrupts.h"
-#include "memory.h"
 #include "libk/assert.h"
 #include "libk/log.h"
+#include "libk/memory.h"
 #include <stdarg.h>
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 void dummy()
 {
@@ -24,11 +24,6 @@ u32 xui[1000];
 void timer_callback(registers_t registers)
 {
     return;
-}
-
-bool write_x(char c) {
-    vga_text_write_byte(c, VGA_TEXT_WHITE_ON_BLACK);
-    return true;
 }
 
 int main()
@@ -49,7 +44,9 @@ int main()
         timer_called += 1;
     }
     klog(INFO, "kernel was initialized successfully!");
-    panic();
+
+    // process management
+
 
     for (;;) {
         asm volatile("hlt");
