@@ -16,5 +16,5 @@ struct registers_t {
     u32 eflags;
 };
 typedef struct registers_t registers_t;
-void register_irq_handler(int irq_no, void (*handler)(registers_t registers));
+void register_interrupt_handler(int int_no, void (*handler)(registers_t registers));
 #endif

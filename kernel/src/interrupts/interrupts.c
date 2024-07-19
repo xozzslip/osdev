@@ -1,8 +1,13 @@
-#include "interrupts.h"
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
 #include "../drivers/low_level.h"
 #include "../drivers/screen.h"
-#include "../types.h"
 #include "../libk/log.h"
+#include "../types.h"
+#include "interrupts.h"
 
 extern void isr0();
 extern void isr1();
@@ -52,26 +57,27 @@ extern void isr44();
 extern void isr45();
 extern void isr46();
 extern void isr47();
+extern void isr128();
 
 struct idt_entry {
-    u16 base_lo; // The lower 16 bits of the address to jump to when this interrupt fires.
-    u16 sel; // Kernel segment selector.
-    u8 always0; // This must always be zero.
-    u8 flags; // More flags. See documentation.
-    u16 base_hi; // The upper 16 bits of the address to jump to.
+    uint16_t base_lo; // The lower 16 bits of the address to jump to when this interrupt fires.
+    uint16_t sel; // Kernel segment selector.
+    uint8_t always0; // This must always be zero.
+    uint8_t flags; // More flags. See documentation.
+    uint16_t base_hi; // The upper 16 bits of the address to jump to.
 } __attribute__((packed));
 typedef struct idt_entry idt_entry;
 
 // TODO: make sure that this is on 8 byte boundary (check intel guide 6.10)
 idt_entry idt[256];
-void (*irq_handlers[256])(registers_t);
+void (*interrupt_handlers[256])(registers_t);
 
 idt_entry build_idt_entry(void (*handler)())
 {
-    u32 handler_address = (u32)handler;
+    uint32_t handler_address = (uint32_t)handler;
     idt_entry e;
-    e.base_lo = (u16)(handler_address & 0xFFFF);
-    e.base_hi = (u16)((handler_address >> 16) & 0xFFFF);
+    e.base_lo = (uint16_t)(handler_address & 0xFFFF);
+    e.base_hi = (uint16_t)((handler_address >> 16) & 0xFFFF);
     e.sel = 0x08; // points to kernel "segment_code" (check gdt.asm)
     e.always0 = 0;
     e.flags = 0x8E;
@@ -79,8 +85,8 @@ idt_entry build_idt_entry(void (*handler)())
 }
 
 struct idt_entry_ptr {
-    u16 limit; // The limit value is expressed in bytes and is added to the base address to get the address of the last valid byte.
-    u32 base; // The address of the first element in our idt_entry array.
+    uint16_t limit; // The limit value is expressed in bytes and is added to the base address to get the address of the last valid byte.
+    uint32_t base; // The address of the first element in our idt_entry array.
 } __attribute__((packed));
 typedef struct idt_entry_ptr idt_entry_ptr;
 
@@ -102,7 +108,7 @@ void remap_pic()
     outb(PIC2_DATA, 0x0);
 }
 
-void send_eoi_pic(u32 irq_no)
+void send_eoi_pic(uint32_t irq_no)
 {
     outb(0x20, 0x20);
     if (irq_no >= 8) {
@@ -110,10 +116,10 @@ void send_eoi_pic(u32 irq_no)
     }
 }
 
-void memset(void* ptr, u8 value, u32 size)
+void memset(void* ptr, uint8_t value, uint32_t size)
 {
     for (int i = 0; i < size; i++) {
-        ((u8*)ptr)[i] = value;
+        ((uint8_t*)ptr)[i] = value;
     }
 }
 
@@ -121,7 +127,7 @@ void init_idt()
 {
     remap_pic();
     memset(&idt, 0, sizeof(idt_entry) * 256);
-    memset(&irq_handlers, 0, sizeof(void*));
+    memset(&interrupt_handlers, 0, sizeof(void*));
     idt[0] = build_idt_entry(isr0);
     idt[1] = build_idt_entry(isr1);
     idt[2] = build_idt_entry(isr2);
@@ -170,23 +176,24 @@ void init_idt()
     idt[45] = build_idt_entry(isr45);
     idt[46] = build_idt_entry(isr46);
     idt[47] = build_idt_entry(isr47);
+    idt[128] = build_idt_entry(isr128);
 
     // intialize special pointer structure
     idt_entry_ptr ptr;
-    ptr.base = (u32)&idt;
+    ptr.base = (uint32_t)&idt;
     ptr.limit = 256 * sizeof(idt_entry) - 1;
 
     __asm__ volatile("lidt %0" : : "m"(ptr));
 }
 
-void register_irq_handler(int irq_no, void (*handler)(registers_t registers))
+void register_interrupt_handler(int int_no, void (*handler)(registers_t registers))
 {
-    irq_handlers[irq_no] = handler;
+    interrupt_handlers[int_no] = handler;
 }
 
 void isr_handler(
-    u32 edi, u32 esi, u32 ebp, u32 esp, u32 ebx, u32 edx, u32 ecx, u32 eax,
-    u32 int_no, u32 error_code, u32 eip, u32 code_segment, u32 eflags)
+    uint32_t edi, uint32_t esi, uint32_t ebp, uint32_t esp, uint32_t ebx, uint32_t edx, uint32_t ecx, uint32_t eax,
+    uint8_t int_no, uint32_t error_code, uint32_t eip, uint32_t code_segment, uint32_t eflags)
 {
 
     registers_t registers;
@@ -202,17 +209,15 @@ void isr_handler(
     registers.code_segment = code_segment;
     registers.eflags = eflags;
 
-    if (int_no >= 32) { // this is PIC interrupt
-        u32 irq_no = int_no - 32;
-        void (*handler)(registers_t) = irq_handlers[irq_no];
-        if (handler != 0) {
-            handler(registers);
-        } else {
-            klog(WARNING, "unhandled IRQ=%u EIP=%u", irq_no, eip);
-        }
-        send_eoi_pic(irq_no);
+    void (*handler)(registers_t) = interrupt_handlers[int_no];
+    if (handler != NULL) {
+        handler(registers);
     } else {
-        klog(WARNING, "unhandled interrupt INT=%u ERROR=%u EIP=%u", int_no, error_code, eip);
+        klog(WARNING, "unhandled interrupt INT=%u ERROR=%u EIP=0x%x", int_no, error_code, eip);
+    }
+    if (int_no >= 32 && int_no < 48) {
+        uint8_t irq_no = int_no - 32;
+        send_eoi_pic(irq_no);
     }
     return;
 }

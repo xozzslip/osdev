@@ -78,3 +78,4 @@ ISR_NOERRCODE    44 ; 44: PIC interrupt 12
 ISR_NOERRCODE    45 ; 45: PIC interrupt 13
 ISR_NOERRCODE    46 ; 46: PIC interrupt 14
 ISR_NOERRCODE    47 ; 47: PIC interrupt 15
+ISR_NOERRCODE    128 ; 128: syscall interrupt

@@ -4,23 +4,31 @@
 #include <stdint.h>
 
 enum {
-    SCREEN_BUFFER_CHANGED,
+    WINDOW_RESIZED,
 } typedef KernelEventType;
 
 typedef struct {
-    KernelEventType type;
-    uint8_t* data;
-} KernelEventHeader;
+    uint8_t* buffer;
+    uint32_t width;
+    uint32_t height;
+} WindowBuffer;
 
 typedef struct {
     uint32_t width;
     uint32_t height;
-    uint8_t* buffer;
-} ScreenBuffer;
+} WindowResized;
+
+typedef struct {
+    KernelEventType type;
+    union {
+        WindowResized window_resized;
+    } data;
+} KernelEvent;
 
 typedef struct {
     uint32_t id;
-    ScreenBuffer *screen_buffer;
+    WindowBuffer window;
+
 } Process;
 
 #endif // PROCESS_H
