@@ -16,14 +16,26 @@ typedef struct {
 typedef struct {
     uint32_t width;
     uint32_t height;
-} WindowResized;
+} KR_WindowResizedEvent;
+
 
 typedef struct {
-    KernelEventType type;
-    union {
-        WindowResized window_resized;
-    } data;
-} KernelEvent;
+    KR_WindowResizedEvent events[2];
+    size_t count;
+} KR_WindowResizedEvents;
+
+
+
+typedef struct {
+    uint8_t* new_ptr;
+} KR_ChangeDataSegment;
+
+typedef struct {
+    uint8_t* buffer;
+    uint32_t width;
+    uint32_t height;
+} KR_RemapWindowBuffer;
+
 
 typedef struct {
     uint32_t id;
