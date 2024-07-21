@@ -20,35 +20,51 @@ int pmain()
 
     WindowResizedEvent resized;
 
-    KR kr = {
-        .type=KR_RECV_NONBLOCK,
-        .request.recv_nonblock = {
-            .path="/proc/window/resized",
-            .buf=&resized,
-            .size=sizeof(resized),
-        },
-    };
-    syscall(&kr);
-    klog(INFO, "error=%d", kr.response.recv_nonblock.error);
+    for (;;) {
+        KR kr = {
+            .type = KR_RECV_NONBLOCK,
+            .request.recv_nonblock = {
+                .path = "/proc/window/resized",
+                .buf = &resized,
+                .size = sizeof(resized),
+            },
+        };
+        syscall(&kr);
+        if (kr.response.recv_nonblock.received > 0 && (window.width != resized.width || window.height != resized.height)) {
+            klog(DEBUG, "window resized from %dX%d to %dX%d", window.width, window.height, resized.width, resized.height);
+            if (window.buffer != NULL) {
+                free(window.buffer);
+            }
+            window.width = resized.width;
+            window.height = resized.height;
+            uint32_t buffer_size = window.width * window.height * 2;
+            klog(DEBUG, "allocating %d bytes for window buffer", buffer_size);
+            window.buffer = malloc(buffer_size);
+            KR kr = {
+                .type = KR_SEND,
+                .request.send = {
+                    .path = "/proc/window/update",
+                    .buf = &window,
+                    .size = sizeof(window),
+                }
+            };
+            syscall(&kr);
+        }
 
-
-    // for (;;) {
-
-
-    //     for (int row = 0; row < window.height; row++) {
-    //         for (int col = 0; col < window.width; col++) {
-    //             uint32_t offset = col + row * window.width;
-    //             char c = 'A' + (offset % 26);
-    //             uint8_t* value = window.buffer + offset * 2;
-    //             if (first_ptr == 0) {
-    //                 first_ptr = value;
-    //             }
-    //             value[0] = c;
-    //             value[1] = x + offset;
-    //             last_ptr = value;
-    //         }
-    //     }
-    //     x++;
-    //     spin_wait(10000000);
-    // }
+        for (int row = 0; row < window.height; row++) {
+            for (int col = 0; col < window.width; col++) {
+                uint32_t offset = col + row * window.width;
+                char c = 'A' + (offset % 26);
+                uint8_t* value = window.buffer + offset * 2;
+                if (first_ptr == 0) {
+                    first_ptr = value;
+                }
+                value[0] = c;
+                value[1] = x + offset;
+                last_ptr = value;
+            }
+        }
+        x++;
+        spin_wait(10000000);
+    }
 }
