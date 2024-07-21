@@ -8,6 +8,7 @@
 #include "libk/log.h"
 #include "libk/memory.h"
 #include "libk/process.h"
+#include "libk/string.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -25,23 +26,43 @@ Process* processes;
 
 void timer_callback(registers_t registers)
 {
-    uint8_t* vga = (uint8_t*)VGA_TEXT_ADDRESS;
-    if (processes[0].window.buffer != NULL) {
-        for (int j = 0; j < 25 * 80 * 2; j++) {
-            vga[j] = processes[0].window.buffer[j];
-        }
-    }
+    // uint8_t* vga = (uint8_t*)VGA_TEXT_ADDRESS;
+    // if (processes[0].window.buffer != NULL) {
+    //     for (int j = 0; j < 25 * 80 * 2; j++) {
+    //         vga[j] = processes[0].window.buffer[j];
+    //     }
+    // }
 
     return;
 }
 
+void memcpy(void *dest, void *src, size_t n) {
+    char *d = (char *)dest;
+    char *s = (char *)src;
+    for (size_t i = 0; i < n; i++) {
+        d[i] = s[i];
+    }
+}
+
 void syscall_handler(registers_t registers)
 {
-    switch (registers.eax) {
-    case 0:
+    KR* kr = (KR*)registers.eax;
+
+    switch (kr->type) {
+    case 10:
         processes[0].window.buffer = (uint8_t*)registers.ebx;
         processes[0].window.width = registers.ecx;
         processes[0].window.height = registers.edx;
+        break;
+    case KR_RECV_NONBLOCK:
+        if (streq(kr->request.recv_nonblock.path, "/proc/window/resized")) {
+            WindowResizedEvent event = {
+                .width = 80,
+                .height = 25,
+            };
+            memcpy(&event, kr->request.recv_nonblock.buf, sizeof(event));
+            kr->response.recv_nonblock.error = 0;
+        }
         break;
     default:
         break;
@@ -70,14 +91,6 @@ int main()
         start first process
     */
 
-    KernelEvent event = {
-        .data.window_resized = {
-            .width = 80,
-            .height = 25 },
-        .type = WINDOW_RESIZED,
-    };
-    processes[0].id = 1;
-    plistener(event);
     pmain();
 
     asm volatile("int $128");

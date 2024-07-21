@@ -1,6 +1,6 @@
 #include <stdbool.h>
 
-bool strcmp(char *a, char *b) {
+bool streq(const char *a, const char *b) {
     int i = 0;
     while (true) {
         if (a[i] != b[i]) {
