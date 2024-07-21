@@ -131,7 +131,7 @@ void* malloc(size_t requested_size)
         i = j + 1;
     }
     if (!found) {
-        klog(FATAL, "failed to allocate enough memory");
+        klog(FATAL, "failed to allocate enough memory: %d bytes", requested_size);
         panic();
     }
     if (j - i + 1 > requested_chunks) {

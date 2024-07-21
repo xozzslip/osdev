@@ -10,43 +10,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-uint32_t syscall(
-    uint32_t syscall_no,
-    uint32_t param1,
-    uint32_t param2,
-    uint32_t param3)
-{
-    uint32_t ret; // To store the return value of the syscall
-    __asm__ volatile(
-        "int $0x80" // Interrupt instruction to invoke the system call
-        : "=a"(ret) // Output: eax will hold the return value after syscall
-        : "a"(syscall_no), // Input: eax should hold the syscall number
-        "b"(param1), // ebx should hold the first argument
-        "c"(param2), // ecx should hold the second argument
-        "d"(param3) // edx should hold the third argument
-        : "memory", "cc" // Tell the compiler to expect changes in memory and condition codes
-    );
-    return ret;
-}
-
-typedef enum {
-    KR_RECV_NONBLOCK,
-    KR_WRITE,
-    KR_SEEK,
-    KR_ALLOCATE_MEMORY,
-    KR_MAP_MEMORY,
-    KR_WAIT,
-} KernelRequestType;
-
-int32_t recv_nonblock(const char* path, void* buf, size_t size)
-{
-    return syscall(
-        KR_RECV_NONBLOCK,
-        (uint32_t)path,
-        (uint32_t)buf,
-        (uint32_t)size);
-}
-
 WindowBuffer window;
 
 int pmain()
@@ -55,19 +18,37 @@ int pmain()
     uint8_t* first_ptr = 0;
     uint8_t* last_ptr = 0;
 
-    int32_t window_fd = open("/dev/window");
-    if (window_fd <= 0) {
-        return -1;
-    }
+    WindowResizedEvent resized;
 
     for (;;) {
-        KR_WindowResizedEvents events = poll_window_resized_events();
-        if (events.count > 0) {
-            KR_WindowResizedEvent resize = events.events[events.count - 1];
-            window.width = resize.width;
-            window.height = resize.height;
-            window.buffer = (uint8_t*)malloc(window.width * window.height * 2);
-            mmap_window(window)
+        KR kr = {
+            .type = KR_RECV_NONBLOCK,
+            .request.recv_nonblock = {
+                .path = "/proc/window/resized",
+                .buf = &resized,
+                .size = sizeof(resized),
+            },
+        };
+        syscall(&kr);
+        if (kr.response.recv_nonblock.received > 0 && (window.width != resized.width || window.height != resized.height)) {
+            klog(DEBUG, "window resized from %dX%d to %dX%d", window.width, window.height, resized.width, resized.height);
+            if (window.buffer != NULL) {
+                free(window.buffer);
+            }
+            window.width = resized.width;
+            window.height = resized.height;
+            uint32_t buffer_size = window.width * window.height * 2;
+            klog(DEBUG, "allocating %d bytes for window buffer", buffer_size);
+            window.buffer = malloc(buffer_size);
+            KR kr = {
+                .type = KR_SEND,
+                .request.send = {
+                    .path = "/proc/window/update",
+                    .buf = &window,
+                    .size = sizeof(window),
+                }
+            };
+            syscall(&kr);
         }
 
         for (int row = 0; row < window.height; row++) {
@@ -85,18 +66,5 @@ int pmain()
         }
         x++;
         spin_wait(10000000);
-    }
-}
-
-void plistener(KernelEvent event)
-{
-    switch (event.type) {
-    case WINDOW_RESIZED:
-        if (window.buffer != NULL) {
-            free(window.buffer);
-        };
-        break;
-    default:
-        break;
     }
 }
