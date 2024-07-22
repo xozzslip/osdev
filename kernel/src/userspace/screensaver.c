@@ -5,6 +5,7 @@
 #include "../libk/process.h"
 #include "../libk/sleep.h"
 #include "../libk/string.h"
+#include "../libk/syscall.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -15,9 +16,10 @@ int pmain()
     uint8_t x = 0;
     uint8_t* first_ptr = 0;
     uint8_t* last_ptr = 0;
+    void * some_buf = malloc(100);
 
-    WindowResizedEvent resized;
-    WindowBuffer window;
+    WindowResizedEvent resized = {0};
+    WindowBuffer window = {0};
 
     for (;;) {
         KR kr = {
@@ -66,5 +68,18 @@ int pmain()
         }
         x++;
         spin_wait(10000000);
+
+
+
+        kr = (KR){
+            .type = KR_READ,
+            .request.read = {
+                .path = "/home/hello.txt",
+                .buf = some_buf,
+                .size = 10,
+            },
+        };
+        syscall(&kr);
+
     }
 }

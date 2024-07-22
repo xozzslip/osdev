@@ -1,3 +1,4 @@
+#include "drivers/ata.h"
 #include "drivers/keyboard.h"
 #include "drivers/low_level.h"
 #include "drivers/screen.h"
@@ -9,6 +10,7 @@
 #include "libk/memory.h"
 #include "libk/process.h"
 #include "libk/string.h"
+#include "libk/syscall.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -44,6 +46,11 @@ void memcpy(void* dest, void* src, size_t n)
     }
 }
 
+void switch_task()
+{
+
+}
+
 void syscall_handler(registers_t registers)
 {
     KR* kr = (KR*)registers.eax;
@@ -66,6 +73,14 @@ void syscall_handler(registers_t registers)
             memcpy(&window, kr->request.send.buf, sizeof(window));
             processes[0].window = window;
         }
+        break;
+    case KR_READ:
+        size_t size = 512;
+        void* buf = malloc(size);
+        enqueue_drive_read(buf, size, 0);
+        processes[0].suspended = true;
+
+        break;
     default:
         break;
     }
