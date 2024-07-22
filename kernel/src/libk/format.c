@@ -69,7 +69,6 @@ enum {
 
 void format_and_write(bool (*write_byte)(char), char* format, va_list args)
 {
-
     int i = 0;
     State state = NORMAL;
     bool write_is_ok = true;

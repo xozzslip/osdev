@@ -4,6 +4,7 @@
 #include "drivers/screen.h"
 #include "drivers/serial.h"
 #include "drivers/timer.h"
+#include "drivers/rtc.h"
 #include "interrupts/interrupts.h"
 #include "libk/assert.h"
 #include "libk/log.h"
@@ -25,9 +26,11 @@ void dummy()
 }
 
 Process* processes;
+uint32_t timeslice_no;
 
 void timer_callback(registers_t registers)
 {
+    timeslice_no++;
     uint8_t* vga = (uint8_t*)VGA_TEXT_ADDRESS;
     if (processes[0].window.buffer != NULL) {
         for (int j = 0; j < 25 * 80 * 2; j++) {
@@ -94,7 +97,7 @@ int main()
     init_serial();
     klog(INFO, "kernel is initializing...");
     init_idt();
-    init_timer(1);
+    init_timer();
     register_interrupt_handler(32, timer_callback);
     register_interrupt_handler(33, keyboard_callback);
     register_interrupt_handler(128, syscall_handler);

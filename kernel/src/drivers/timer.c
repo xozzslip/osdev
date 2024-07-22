@@ -1,15 +1,15 @@
 #include "timer.h"
-#include "../types.h"
 #include "low_level.h"
 #include "screen.h"
+#include <stdint.h>
 
 #define PIT_COMMAND 0x43
 #define PIT_DATA_CHANNEL_0 0x40
-#define PIT_RESOLUTION_HZ 1193180 // 1.19 MHz
+#define PIT_RESOLUTION_HZ 1193182 // 1.19 MHz
 
-u32 read_pit_count(void)
+uint32_t read_pit_count(void)
 {
-    u32 count = 0;
+    uint32_t count = 0;
     // al = channel in bits 6 and 7, remaining bits clear
     outb(0x43, 0b0000000);
     count = inb(0x40); // Low byte
@@ -17,12 +17,32 @@ u32 read_pit_count(void)
     return count;
 }
 
-void init_timer(u16 frequency)
+uint32_t dist(uint32_t a, uint32_t b) {
+    if (a >= b) {
+        return a - b;
+    } else {
+        return b - a;
+    }
+}
+
+uint32_t calculate_best_hertz(uint32_t requested_hz) {
+    uint32_t best_hz = PIT_RESOLUTION_HZ;
+    uint16_t best_div = 1;
+    for (uint16_t div = 1; div < 0xFFFF; div++) {
+        uint32_t hz = PIT_RESOLUTION_HZ / div;
+        if (dist(hz, requested_hz) < dist(best_hz, requested_hz)) {
+            best_hz = hz;
+            best_div = div;
+        }
+    }
+    return best_hz; // and best_div?
+}
+
+void init_timer()
 {
-    u16 divisor = PIT_RESOLUTION_HZ / frequency;
-    u8 l = (u8)(divisor & 0xFF);
-    u8 h = (u8)((divisor >> 8) & 0xFF);
+    // uint8_t l = (u8)(best_div & 0xFF);
+    // uint8_t h = (u8)((best_div >> 8) & 0xFF);
     outb(PIT_COMMAND, 0x36);
-    outb(PIT_DATA_CHANNEL_0, l);
-    outb(PIT_DATA_CHANNEL_0, h);
+    outb(PIT_DATA_CHANNEL_0, 0xFF);
+    outb(PIT_DATA_CHANNEL_0, 0xFF);
 }
