@@ -69,6 +69,7 @@ enum {
 
 void format_and_write(bool (*write_byte)(char), char* format, va_list args)
 {
+
     int i = 0;
     State state = NORMAL;
     bool write_is_ok = true;
@@ -115,7 +116,7 @@ void format_and_write(bool (*write_byte)(char), char* format, va_list args)
                 break;
             case 'c':
                 unsigned_value = va_arg(args, uint32_t);
-                write_is_ok = write_byte((uint8_t) unsigned_value);
+                write_is_ok = write_byte((uint8_t)unsigned_value);
                 value = "\0";
                 break;
             default:

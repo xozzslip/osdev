@@ -17,7 +17,6 @@
         }                                                  \
     } while (0)
 
-
 #define panic()                         \
     do {                                \
         klog(                           \

@@ -42,14 +42,14 @@ char serial_read_byte()
     return inb(PORT);
 }
 
-bool is_transmit_empty()
+bool is_ready_to_write()
 {
     return inb(PORT + 5) & 0x20;
 }
 
 void serial_write_byte(char a)
 {
-    while (is_transmit_empty() == 0) {
+    while (is_ready_to_write() == 0) {
         // spinwait
     }
     outb(PORT, a);

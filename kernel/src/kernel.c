@@ -48,7 +48,6 @@ void memcpy(void* dest, void* src, size_t n)
 
 void switch_task()
 {
-
 }
 
 void syscall_handler(registers_t registers)
