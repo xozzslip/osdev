@@ -1,13 +1,9 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 
-#include <stdint.h>
-#include <stddef.h>
 #include <stdbool.h>
-
-enum {
-    WINDOW_RESIZED,
-} typedef KernelEventType;
+#include <stddef.h>
+#include <stdint.h>
 
 typedef struct {
     uint8_t* buffer;
@@ -21,25 +17,26 @@ typedef struct {
 } WindowResizedEvent;
 
 typedef enum {
-    KR_RECV_NONBLOCK,
+    KR_RECV,
     KR_SEND,
 } KR_Type;
 
 typedef struct {
     const char* path;
-    void *buf;
+    void* buf;
     size_t size;
-} KR_RECV_NONBLOCK_Request;
+    bool nonblock;
+} KR_RECV_Request;
 
 typedef struct {
     uint32_t error;
     size_t received;
     bool closed;
-} KR_RECV_NONBLOCK_Response;
+} KR_RECV_Response;
 
 typedef struct {
     const char* path;
-    void *buf;
+    void* buf;
     size_t size;
 } KR_SEND_Request;
 
@@ -50,11 +47,11 @@ typedef struct {
 typedef struct {
     KR_Type type;
     union {
-        KR_RECV_NONBLOCK_Request recv_nonblock;
+        KR_RECV_Request recv;
         KR_SEND_Request send;
     } request;
     union {
-        KR_RECV_NONBLOCK_Response recv_nonblock;
+        KR_RECV_Response recv;
         KR_SEND_Response send;
     } response;
 } KR;

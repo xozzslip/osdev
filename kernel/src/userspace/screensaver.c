@@ -10,8 +10,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-WindowBuffer window;
-
 int pmain()
 {
     uint8_t x = 0;
@@ -19,18 +17,20 @@ int pmain()
     uint8_t* last_ptr = 0;
 
     WindowResizedEvent resized;
+    WindowBuffer window;
 
     for (;;) {
         KR kr = {
-            .type = KR_RECV_NONBLOCK,
-            .request.recv_nonblock = {
+            .type = KR_RECV,
+            .request.recv = {
                 .path = "/proc/window/resized",
                 .buf = &resized,
                 .size = sizeof(resized),
+                .nonblock = true,
             },
         };
         syscall(&kr);
-        if (kr.response.recv_nonblock.received > 0 && (window.width != resized.width || window.height != resized.height)) {
+        if (kr.response.recv.received > 0 && (window.width != resized.width || window.height != resized.height)) {
             klog(DEBUG, "window resized from %dX%d to %dX%d", window.width, window.height, resized.width, resized.height);
             if (window.buffer != NULL) {
                 free(window.buffer);

@@ -48,24 +48,21 @@ void syscall_handler(registers_t registers)
 {
     KR* kr = (KR*)registers.eax;
 
-
     switch (kr->type) {
-    case KR_RECV_NONBLOCK:
-        klog(INFO, "KR_RECV_NONBLOCK syscall received");
-        if (streq(kr->request.recv_nonblock.path, "/proc/window/resized")) {
+    case KR_RECV:
+        if (streq(kr->request.recv.path, "/proc/window/resized")) {
             WindowResizedEvent event = {
                 .width = 80,
                 .height = 25,
             };
-            memcpy(kr->request.recv_nonblock.buf, &event, sizeof(event));
-            kr->response.recv_nonblock.error = 0;
-            kr->response.recv_nonblock.received = sizeof(WindowResizedEvent);
+            memcpy(kr->request.recv.buf, &event, sizeof(event));
+            kr->response.recv.error = 0;
+            kr->response.recv.received = sizeof(WindowResizedEvent);
         }
         break;
     case KR_SEND:
-        klog(INFO, "KR_SEND syscall received");
         if (streq(kr->request.send.path, "/proc/window/update")) {
-            WindowBuffer window = {0};
+            WindowBuffer window = { 0 };
             memcpy(&window, kr->request.send.buf, sizeof(window));
             processes[0].window = window;
         }
