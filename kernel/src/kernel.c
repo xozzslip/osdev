@@ -9,14 +9,13 @@
 #include "libk/assert.h"
 #include "libk/log.h"
 #include "libk/memory.h"
-#include "libk/process.h"
 #include "libk/string.h"
-#include "libk/syscall.h"
+#include "../include/process.h"
+#include "../include/syscall.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "userspace/screensaver.h"
 
 void dummy()
 {
@@ -92,7 +91,6 @@ void syscall_handler(registers_t* registers)
         void* buf = malloc(size);
         enqueue_drive_read(buf, size, 0);
         processes[0].suspended = true;
-
         break;
     default:
         break;
@@ -120,9 +118,7 @@ int main()
     /*
         start first process
     */
-    pmain();
-
-
+    // pmain();
 
     for (;;) {
         asm volatile("hlt");

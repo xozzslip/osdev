@@ -1,4 +1,4 @@
-#include "syscall.h"
+#include "../../include/syscall.h"
 
 void syscall(KR* request)
 {

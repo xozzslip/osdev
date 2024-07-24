@@ -1,11 +1,6 @@
-#include "../drivers/screen.h"
-#include "../libk/assert.h"
-#include "../libk/log.h"
 #include "../libk/memory.h"
-#include "../libk/process.h"
-#include "../libk/sleep.h"
-#include "../libk/string.h"
-#include "../libk/syscall.h"
+#include "../../include/process.h"
+#include "../../include/syscall.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -33,14 +28,12 @@ int pmain()
         };
         syscall(&kr);
         if (kr.response.recv.received > 0 && (window.width != resized.width || window.height != resized.height)) {
-            klog(DEBUG, "window resized from %dX%d to %dX%d", window.width, window.height, resized.width, resized.height);
             if (window.buffer != NULL) {
                 free(window.buffer);
             }
             window.width = resized.width;
             window.height = resized.height;
             uint32_t buffer_size = window.width * window.height * 2;
-            klog(DEBUG, "allocating %d bytes for window buffer", buffer_size);
             window.buffer = malloc(buffer_size);
             KR kr = {
                 .type = KR_SEND,
@@ -69,8 +62,6 @@ int pmain()
         x++;
         spin_wait(10000000);
 
-
-
         kr = (KR){
             .type = KR_READ,
             .request.read = {
@@ -80,6 +71,5 @@ int pmain()
             },
         };
         syscall(&kr);
-
     }
 }
