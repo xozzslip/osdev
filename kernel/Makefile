@@ -1,14 +1,19 @@
-$(shell mkdir -p build build/drivers build/boot build/interrupts build/libk build/userspace)
-C_FILES = $(wildcard src/*.c src/drivers/*.c src/interrupts/*.c src/libk/*.c src/userspace/*.c)
-H_FILES = $(wildcard src/*.h src/drivers/*.h src/interrupts/*.h src/libk/*.h src/userspace/*.h)
-ASM_FILES = $(wildcard src/interrupts/*.asm)
-OBJ_FILES = $(patsubst src/%.c,build/%.o,$(C_FILES))
-OBJ_FILES += $(patsubst src/%.asm,build/%.o,$(ASM_FILES))
-
 CC = i386-elf-gcc
 LD = i386-elf-ld
 GDB = i386-elf-gdb
 QEMU = qemu-system-i386 -m 128M -drive format=raw,file=build/disk.img
+
+$(shell find src -type d -exec sh -c 'mkdir -p build/$$(echo "{}" | sed "s|^src||")' \;)
+KERNEL_C = $(shell find src/kernel -type f -name '*.c')
+KERNEL_ASM = $(shell find src/kernel -type f -name '*.asm')
+KERNEL_H = $(shell find src/kernel -type f -name '*.h')
+KERNEL_H += $(shell find src/include -type f -name '*.h')
+KERNEL_ENTRY_OBJ = build/kernel/entry.o
+KERNEL_OBJ = $(patsubst src/%.c,build/%.o,$(KERNEL_C))
+KERNEL_OBJ += $(patsubst src/%.asm,build/%.o,$(KERNEL_ASM))
+KERNEL_LD = src/kernel/linker.ld
+BOOT_ASM = $(shell find src/boot -type f -name '*.asm')
+BOOT_OBJ = $(patsubst src/%.c,build/%.o,$(BOOT_ASM))
 
 # Run 32 bit machine with 128M of RAM
 .PHONY: run
@@ -36,8 +41,8 @@ build: build/disk.img build/kernel.elf
 disasm: build/kernel.elf
 	objdump -d -M intel $<
 
-build/kernel.bin: linker.ld build/kernel_entry.o $(OBJ_FILES)
-	$(LD) build/kernel_entry.o $(OBJ_FILES) -o $@ -T linker.ld --oformat binary
+build/kernel.bin: $(KERNEL_LD) $(KERNEL_OBJ)
+	$(LD) $(KERNEL_ENTRY_OBJ) $(KERNEL_OBJ) -o $@ -T $(KERNEL_LD) --oformat binary
 
 build/%.o: src/%.c $(H_FILES)
 	$(CC) -Werror -O0 -g -ffreestanding -c $< -o $@
@@ -53,8 +58,8 @@ clean:
 	rm -rf build/*
 
 ### Debugging ###
-build/kernel.elf: linker.ld build/kernel_entry.o $(OBJ_FILES)
-	$(LD) build/kernel_entry.o $(OBJ_FILES) -o $@ -T linker.ld -Map=build/linker.map
+build/kernel.elf: $(KERNEL_LD) $(KERNEL_OBJ)
+	$(LD) $(KERNEL_ENTRY_OBJ) $(KERNEL_OBJ) -o $@ -T $(KERNEL_LD) -Map=build/linker.map
 
 .PHONY: debug
 debug: build/disk.img build/kernel.elf
