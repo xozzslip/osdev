@@ -1,0 +1,387 @@
+
+There are no discarded input sections
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+RAM              0x00007e00         0x0000fc00
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+LOAD build/kernel/entry.o
+LOAD build/kernel/libk/format.o
+LOAD build/kernel/libk/sleep.o
+LOAD build/kernel/libk/string.o
+LOAD build/kernel/libk/memory.o
+LOAD build/kernel/kernel.o
+LOAD build/kernel/drivers/low_level.o
+LOAD build/kernel/drivers/ata.o
+LOAD build/kernel/drivers/rtc.o
+LOAD build/kernel/drivers/serial.o
+LOAD build/kernel/drivers/screen.o
+LOAD build/kernel/drivers/timer.o
+LOAD build/kernel/drivers/keyboard.o
+LOAD build/kernel/interrupts/interrupts.o
+LOAD build/kernel/entry.o
+LOAD build/kernel/interrupts/handlers.o
+
+.text           0x00007e00     0x2c7a
+ *(.text)
+ .text          0x00007e00        0x7 build/kernel/entry.o
+ .text          0x00007e07      0x3d4 build/kernel/libk/format.o
+                0x00007e07                int_to_str
+                0x00007ea9                uint_to_str
+                0x00007f23                uint_to_hex
+                0x00007f87                format_and_write
+                0x00008146                _vga_text_write_byte
+                0x0000816f                _serial_write_byte
+                0x0000818f                format_and_write_to_vga_text
+                0x000081b5                format_and_write_to_serial_port
+ .text          0x000081db       0x2a build/kernel/libk/sleep.o
+                0x000081db                spin_wait
+ .text          0x00008205       0x42 build/kernel/libk/string.o
+                0x00008205                streq
+ .text          0x00008247      0x94d build/kernel/libk/memory.o
+                0x00008247                assert_memorny
+                0x0000830e                read_memory_size
+                0x00008393                setup_kernel_heap
+                0x0000858b                malloc
+                0x00008777                free
+                0x00008923                run_tests
+ .text          0x00008b94      0x377 build/kernel/kernel.o
+                0x00008b94                dummy
+                0x00008ba2                timer_callback
+                0x00008bf8                memcpy
+                0x00008c36                switch_task
+                0x00008cf2                syscall_handler
+                0x00008e2b                main
+ .text          0x00008f0b      0x103 build/kernel/drivers/low_level.o
+                0x00008f0b                inb
+                0x00008f2d                outb
+                0x00008f55                port_word_in
+                0x00008f7d                port_word_out
+                0x00008fa8                spin_wait_second
+                0x00008fd3                spin_wait_milisecond
+                0x00008ffe                empty_func
+ .text          0x0000900e      0x129 build/kernel/drivers/ata.o
+                0x0000900e                enqueue_drive_request
+                0x00009101                enqueue_drive_read
+                0x0000911c                enqueue_drive_write
+ .text          0x00009137      0x59e build/kernel/drivers/rtc.o
+                0x00009137                get_update_in_progress_flag
+                0x00009163                get_RTC_register
+                0x0000918c                reread_rtc
+                0x0000951a                isLeapYear
+                0x0000956d                daysInMonth
+                0x000095d3                dateToUnixTimestamp
+                0x000096c3                read_unix_time
+ .text          0x000096d5      0x17d build/kernel/drivers/serial.o
+                0x000096d5                init_serial
+                0x000097b4                serial_received
+                0x000097d7                serial_read_byte
+                0x000097fc                is_ready_to_write
+                0x0000981f                serial_write_byte
+ .text          0x00009852      0x27f build/kernel/drivers/screen.o
+                0x00009852                calc_col
+                0x00009876                calc_row
+                0x000098c9                vga_text_get_cursor
+                0x00009953                vga_text_set_cursor
+                0x000099e1                vga_text_write_byte_at
+                0x00009a50                vga_text_write_byte
+ .text          0x00009ad1      0x114 build/kernel/drivers/timer.o
+                0x00009ad1                read_pit_count
+                0x00009b1b                dist
+                0x00009b36                calculate_best_hertz
+                0x00009ba9                init_timer
+ .text          0x00009be5      0x161 build/kernel/drivers/keyboard.o
+                0x00009be5                keyboard_callback
+                0x00009c29                scancode_to_acsii
+ .text          0x00009d46      0x984 build/kernel/interrupts/interrupts.o
+                0x00009d46                build_idt_entry
+                0x00009d86                remap_pic
+                0x00009e34                send_eoi_pic
+                0x00009e64                memset
+                0x00009e95                init_idt
+                0x0000a5f5                register_interrupt_handler
+                0x0000a608                isr_handler
+ *fill*         0x0000a6ca        0x6 
+ .text          0x0000a6d0        0x7 build/kernel/entry.o
+ *fill*         0x0000a6d7        0x9 
+ .text          0x0000a6e0      0x39a build/kernel/interrupts/handlers.o
+                0x0000a6e0                isr0
+                0x0000a6f3                isr1
+                0x0000a706                isr2
+                0x0000a719                isr3
+                0x0000a72c                isr4
+                0x0000a73f                isr5
+                0x0000a752                isr6
+                0x0000a765                isr7
+                0x0000a778                isr8
+                0x0000a789                isr9
+                0x0000a79c                isr10
+                0x0000a7ad                isr11
+                0x0000a7be                isr12
+                0x0000a7cf                isr13
+                0x0000a7e0                isr14
+                0x0000a7f1                isr15
+                0x0000a804                isr16
+                0x0000a817                isr17
+                0x0000a82a                isr18
+                0x0000a83d                isr19
+                0x0000a850                isr20
+                0x0000a863                isr21
+                0x0000a876                isr22
+                0x0000a889                isr23
+                0x0000a89c                isr24
+                0x0000a8af                isr25
+                0x0000a8c2                isr26
+                0x0000a8d5                isr27
+                0x0000a8e8                isr28
+                0x0000a8fb                isr29
+                0x0000a90e                isr30
+                0x0000a921                isr31
+                0x0000a934                isr32
+                0x0000a947                isr33
+                0x0000a95a                isr34
+                0x0000a96d                isr35
+                0x0000a980                isr36
+                0x0000a993                isr37
+                0x0000a9a6                isr38
+                0x0000a9b9                isr39
+                0x0000a9cc                isr40
+                0x0000a9df                isr41
+                0x0000a9f2                isr42
+                0x0000aa05                isr43
+                0x0000aa18                isr44
+                0x0000aa2b                isr45
+                0x0000aa3e                isr46
+                0x0000aa51                isr47
+                0x0000aa64                isr128
+
+.rodata         0x0000aa7c      0x70c
+ .rodata        0x0000aa7c       0x5c build/kernel/libk/format.o
+ .rodata        0x0000aad8      0x4a3 build/kernel/libk/memory.o
+ *fill*         0x0000af7b        0x1 
+ .rodata        0x0000af7c       0x7c build/kernel/kernel.o
+ .rodata        0x0000aff8       0x73 build/kernel/drivers/ata.o
+ *fill*         0x0000b06b        0x1 
+ .rodata        0x0000b06c       0xe8 build/kernel/drivers/keyboard.o
+ .rodata        0x0000b154       0x34 build/kernel/interrupts/interrupts.o
+
+.iplt           0x0000b188        0x0
+ .iplt          0x0000b188        0x0 build/kernel/entry.o
+
+.rel.dyn        0x0000b188        0x0
+ .rel.got       0x0000b188        0x0 build/kernel/entry.o
+ .rel.iplt      0x0000b188        0x0 build/kernel/entry.o
+
+.data           0x0000b188        0x0
+ *(.data)
+ .data          0x0000b188        0x0 build/kernel/libk/format.o
+ .data          0x0000b188        0x0 build/kernel/libk/sleep.o
+ .data          0x0000b188        0x0 build/kernel/libk/string.o
+ .data          0x0000b188        0x0 build/kernel/libk/memory.o
+ .data          0x0000b188        0x0 build/kernel/kernel.o
+ .data          0x0000b188        0x0 build/kernel/drivers/low_level.o
+ .data          0x0000b188        0x0 build/kernel/drivers/ata.o
+ .data          0x0000b188        0x0 build/kernel/drivers/rtc.o
+ .data          0x0000b188        0x0 build/kernel/drivers/serial.o
+ .data          0x0000b188        0x0 build/kernel/drivers/screen.o
+ .data          0x0000b188        0x0 build/kernel/drivers/timer.o
+ .data          0x0000b188        0x0 build/kernel/drivers/keyboard.o
+ .data          0x0000b188        0x0 build/kernel/interrupts/interrupts.o
+
+.got            0x0000b188        0x0
+ .got           0x0000b188        0x0 build/kernel/entry.o
+
+.got.plt        0x0000b188        0x0
+ .got.plt       0x0000b188        0x0 build/kernel/entry.o
+
+.igot.plt       0x0000b188        0x0
+ .igot.plt      0x0000b188        0x0 build/kernel/entry.o
+
+.bss            0x0000b1a0      0xc20
+ *(.bss)
+ .bss           0x0000b1a0        0x0 build/kernel/libk/format.o
+ .bss           0x0000b1a0        0x0 build/kernel/libk/sleep.o
+ .bss           0x0000b1a0        0x0 build/kernel/libk/string.o
+ .bss           0x0000b1a0        0x0 build/kernel/libk/memory.o
+ .bss           0x0000b1a0        0xc build/kernel/kernel.o
+                0x0000b1a0                current_process_index
+                0x0000b1a4                processes
+                0x0000b1a8                current_timeslice
+ .bss           0x0000b1ac        0x0 build/kernel/drivers/low_level.o
+ .bss           0x0000b1ac        0x4 build/kernel/drivers/ata.o
+                0x0000b1ac                queue
+ .bss           0x0000b1b0       0x10 build/kernel/drivers/rtc.o
+                0x0000b1b0                century_register
+                0x0000b1b4                second
+                0x0000b1b5                minute
+                0x0000b1b6                hour
+                0x0000b1b7                day
+                0x0000b1b8                month
+                0x0000b1bc                year
+ .bss           0x0000b1c0        0x0 build/kernel/drivers/serial.o
+ .bss           0x0000b1c0        0x0 build/kernel/drivers/screen.o
+ .bss           0x0000b1c0        0x0 build/kernel/drivers/timer.o
+ .bss           0x0000b1c0        0x0 build/kernel/drivers/keyboard.o
+ .bss           0x0000b1c0      0xc00 build/kernel/interrupts/interrupts.o
+                0x0000b1c0                idt
+                0x0000b9c0                interrupt_handlers
+OUTPUT(build/kernel.elf elf32-i386)
+
+.debug_info     0x00000000     0x2975
+ .debug_info    0x00000000      0x3fe build/kernel/libk/format.o
+ .debug_info    0x000003fe       0xbd build/kernel/libk/sleep.o
+ .debug_info    0x000004bb       0x83 build/kernel/libk/string.o
+ .debug_info    0x0000053e      0x7f9 build/kernel/libk/memory.o
+ .debug_info    0x00000d37      0x7eb build/kernel/kernel.o
+ .debug_info    0x00001522      0x197 build/kernel/drivers/low_level.o
+ .debug_info    0x000016b9      0x2b8 build/kernel/drivers/ata.o
+ .debug_info    0x00001971      0x2fc build/kernel/drivers/rtc.o
+ .debug_info    0x00001c6d      0x12a build/kernel/drivers/serial.o
+ .debug_info    0x00001d97      0x20d build/kernel/drivers/screen.o
+ .debug_info    0x00001fa4      0x18f build/kernel/drivers/timer.o
+ .debug_info    0x00002133      0x1d0 build/kernel/drivers/keyboard.o
+ .debug_info    0x00002303      0x672 build/kernel/interrupts/interrupts.o
+
+.debug_abbrev   0x00000000     0x1030
+ .debug_abbrev  0x00000000      0x177 build/kernel/libk/format.o
+ .debug_abbrev  0x00000177       0x7e build/kernel/libk/sleep.o
+ .debug_abbrev  0x000001f5       0x7c build/kernel/libk/string.o
+ .debug_abbrev  0x00000271      0x1a3 build/kernel/libk/memory.o
+ .debug_abbrev  0x00000414      0x239 build/kernel/kernel.o
+ .debug_abbrev  0x0000064d       0xd9 build/kernel/drivers/low_level.o
+ .debug_abbrev  0x00000726      0x178 build/kernel/drivers/ata.o
+ .debug_abbrev  0x0000089e      0x193 build/kernel/drivers/rtc.o
+ .debug_abbrev  0x00000a31       0xa4 build/kernel/drivers/serial.o
+ .debug_abbrev  0x00000ad5      0x127 build/kernel/drivers/screen.o
+ .debug_abbrev  0x00000bfc      0x12c build/kernel/drivers/timer.o
+ .debug_abbrev  0x00000d28      0x127 build/kernel/drivers/keyboard.o
+ .debug_abbrev  0x00000e4f      0x1e1 build/kernel/interrupts/interrupts.o
+
+.debug_aranges  0x00000000      0x1a0
+ .debug_aranges
+                0x00000000       0x20 build/kernel/libk/format.o
+ .debug_aranges
+                0x00000020       0x20 build/kernel/libk/sleep.o
+ .debug_aranges
+                0x00000040       0x20 build/kernel/libk/string.o
+ .debug_aranges
+                0x00000060       0x20 build/kernel/libk/memory.o
+ .debug_aranges
+                0x00000080       0x20 build/kernel/kernel.o
+ .debug_aranges
+                0x000000a0       0x20 build/kernel/drivers/low_level.o
+ .debug_aranges
+                0x000000c0       0x20 build/kernel/drivers/ata.o
+ .debug_aranges
+                0x000000e0       0x20 build/kernel/drivers/rtc.o
+ .debug_aranges
+                0x00000100       0x20 build/kernel/drivers/serial.o
+ .debug_aranges
+                0x00000120       0x20 build/kernel/drivers/screen.o
+ .debug_aranges
+                0x00000140       0x20 build/kernel/drivers/timer.o
+ .debug_aranges
+                0x00000160       0x20 build/kernel/drivers/keyboard.o
+ .debug_aranges
+                0x00000180       0x20 build/kernel/interrupts/interrupts.o
+
+.debug_line     0x00000000     0x11a3
+ .debug_line    0x00000000      0x216 build/kernel/libk/format.o
+ .debug_line    0x00000216       0x72 build/kernel/libk/sleep.o
+ .debug_line    0x00000288       0x6c build/kernel/libk/string.o
+ .debug_line    0x000002f4      0x323 build/kernel/libk/memory.o
+ .debug_line    0x00000617      0x204 build/kernel/kernel.o
+ .debug_line    0x0000081b       0xbe build/kernel/drivers/low_level.o
+ .debug_line    0x000008d9       0xc0 build/kernel/drivers/ata.o
+ .debug_line    0x00000999      0x2e5 build/kernel/drivers/rtc.o
+ .debug_line    0x00000c7e       0xc8 build/kernel/drivers/serial.o
+ .debug_line    0x00000d46      0x108 build/kernel/drivers/screen.o
+ .debug_line    0x00000e4e       0xdd build/kernel/drivers/timer.o
+ .debug_line    0x00000f2b       0xbb build/kernel/drivers/keyboard.o
+ .debug_line    0x00000fe6      0x1bd build/kernel/interrupts/interrupts.o
+
+.debug_str      0x00000000      0xa6c
+ .debug_str     0x00000000      0xa6c build/kernel/libk/format.o
+                                0x27b (size before relaxing)
+ .debug_str     0x00000a6c       0xdb build/kernel/libk/sleep.o
+ .debug_str     0x00000a6c       0x4e build/kernel/libk/string.o
+ .debug_str     0x00000a6c      0x2c4 build/kernel/libk/memory.o
+ .debug_str     0x00000a6c      0x3e0 build/kernel/kernel.o
+ .debug_str     0x00000a6c       0xb9 build/kernel/drivers/low_level.o
+ .debug_str     0x00000a6c      0x1d0 build/kernel/drivers/ata.o
+ .debug_str     0x00000a6c      0x210 build/kernel/drivers/rtc.o
+ .debug_str     0x00000a6c      0x138 build/kernel/drivers/serial.o
+ .debug_str     0x00000a6c      0x171 build/kernel/drivers/screen.o
+ .debug_str     0x00000a6c      0x135 build/kernel/drivers/timer.o
+ .debug_str     0x00000a6c      0x13c build/kernel/drivers/keyboard.o
+ .debug_str     0x00000a6c      0x35e build/kernel/interrupts/interrupts.o
+
+.debug_line_str
+                0x00000000      0x36b
+ .debug_line_str
+                0x00000000      0x36b build/kernel/libk/format.o
+                                0x10c (size before relaxing)
+ .debug_line_str
+                0x0000036b       0xd3 build/kernel/libk/sleep.o
+ .debug_line_str
+                0x0000036b       0x79 build/kernel/libk/string.o
+ .debug_line_str
+                0x0000036b       0xe8 build/kernel/libk/memory.o
+ .debug_line_str
+                0x0000036b      0x18d build/kernel/kernel.o
+ .debug_line_str
+                0x0000036b       0x88 build/kernel/drivers/low_level.o
+ .debug_line_str
+                0x0000036b      0x109 build/kernel/drivers/ata.o
+ .debug_line_str
+                0x0000036b       0xdf build/kernel/drivers/rtc.o
+ .debug_line_str
+                0x0000036b       0x8b build/kernel/drivers/serial.o
+ .debug_line_str
+                0x0000036b       0x8b build/kernel/drivers/screen.o
+ .debug_line_str
+                0x0000036b       0xe5 build/kernel/drivers/timer.o
+ .debug_line_str
+                0x0000036b      0x143 build/kernel/drivers/keyboard.o
+ .debug_line_str
+                0x0000036b      0x14f build/kernel/interrupts/interrupts.o
+
+.comment        0x00000000       0x12
+ .comment       0x00000000       0x12 build/kernel/libk/format.o
+                                 0x13 (size before relaxing)
+ .comment       0x00000012       0x13 build/kernel/libk/sleep.o
+ .comment       0x00000012       0x13 build/kernel/libk/string.o
+ .comment       0x00000012       0x13 build/kernel/libk/memory.o
+ .comment       0x00000012       0x13 build/kernel/kernel.o
+ .comment       0x00000012       0x13 build/kernel/drivers/low_level.o
+ .comment       0x00000012       0x13 build/kernel/drivers/ata.o
+ .comment       0x00000012       0x13 build/kernel/drivers/rtc.o
+ .comment       0x00000012       0x13 build/kernel/drivers/serial.o
+ .comment       0x00000012       0x13 build/kernel/drivers/screen.o
+ .comment       0x00000012       0x13 build/kernel/drivers/timer.o
+ .comment       0x00000012       0x13 build/kernel/drivers/keyboard.o
+ .comment       0x00000012       0x13 build/kernel/interrupts/interrupts.o
+
+.debug_frame    0x00000000      0x974
+ .debug_frame   0x00000000      0x114 build/kernel/libk/format.o
+ .debug_frame   0x00000114       0x34 build/kernel/libk/sleep.o
+ .debug_frame   0x00000148       0x34 build/kernel/libk/string.o
+ .debug_frame   0x0000017c      0x11c build/kernel/libk/memory.o
+ .debug_frame   0x00000298       0xf4 build/kernel/kernel.o
+ .debug_frame   0x0000038c       0xfc build/kernel/drivers/low_level.o
+ .debug_frame   0x00000488       0x80 build/kernel/drivers/ata.o
+ .debug_frame   0x00000508       0xf4 build/kernel/drivers/rtc.o
+ .debug_frame   0x000005fc       0xb4 build/kernel/drivers/serial.o
+ .debug_frame   0x000006b0       0xd8 build/kernel/drivers/screen.o
+ .debug_frame   0x00000788       0x98 build/kernel/drivers/timer.o
+ .debug_frame   0x00000820       0x54 build/kernel/drivers/keyboard.o
+ .debug_frame   0x00000874      0x100 build/kernel/interrupts/interrupts.o
+
+.debug_rnglists
+                0x00000000       0x17
+ .debug_rnglists
+                0x00000000       0x17 build/kernel/libk/memory.o

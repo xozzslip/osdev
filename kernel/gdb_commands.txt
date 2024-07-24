@@ -1,5 +1,0 @@
-set confirm off
-set pagination off
-layout split
-break main
-continue
