@@ -1,12 +1,12 @@
-### Usage
+## Usage
 
-Run to set path to cross-compiler and python interpreter \
+Run to set path to cross-compiler \
 `source env.sh` \
 Then \
 `make run` or `make debug`
 
 
-### Memory Map
+## Memory Map
 
 0x0000-0x04FF      some BIOS stuff \
 0x0500-0x6500      zeroed memory I use for passing data from bootloader to kernel (24 KiB) \
@@ -25,7 +25,7 @@ Build cross compiler https://wiki.osdev.org/GCC_Cross-Compiler#Downloading_the_S
 
 
 
-### Dependencies:
+## Dependencies:
 
 1) cross compiler gcc i386 (write some notes on how to install it)
 2) python compiled with --enable-shared. GDB depends on python dynamic library and not on python itself.

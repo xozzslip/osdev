@@ -9,6 +9,7 @@ MEMORY
 SECTIONS
 {
     .text : {
+        *(.kernel_entry) /* Binary MUST start from entry.asm */
         *(.text)
     } >RAM
 

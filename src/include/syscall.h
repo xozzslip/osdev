@@ -10,6 +10,7 @@ typedef enum {
     KR_SEND,
     KR_READ,
     KR_WRITE,
+    KR_MALLOC,
 } KR_Type;
 
 //////////////////////////////////
@@ -59,6 +60,15 @@ typedef struct {
     uint32_t error;
 } KR_WRITE_Response;
 
+// MALLOC
+typedef struct {
+    size_t size;
+} KR_MALLOC_Request;
+typedef struct {
+    void* buf;
+    uint32_t error;
+} KR_MALLOC_Response;
+
 //////////////////////////////////
 /////// Main syscall struct //////
 //////////////////////////////////
@@ -69,12 +79,14 @@ typedef struct {
         KR_SEND_Request send;
         KR_READ_Request read;
         KR_WRITE_Request write;
+        KR_MALLOC_Request malloc;
     } request;
     union {
         KR_RECV_Response recv;
         KR_SEND_Response send;
         KR_READ_Response read;
         KR_WRITE_Response write;
+        KR_MALLOC_Response malloc;
     } response;
 } KR;
 void syscall(KR* request);

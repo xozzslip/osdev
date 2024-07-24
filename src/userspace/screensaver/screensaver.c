@@ -1,12 +1,17 @@
-#include "../libk/memory.h"
-#include "../../include/process.h"
-#include "../../include/syscall.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "../../include/process.h"
+#include "../../include/syscall.h"
+#include "../libc/memory.h"
 
-int pmain()
+void dummy() {
+    dummy();
+}
+
+
+int main()
 {
     uint8_t x = 0;
     uint8_t* first_ptr = 0;
@@ -60,7 +65,6 @@ int pmain()
             }
         }
         x++;
-        spin_wait(10000000);
 
         kr = (KR){
             .type = KR_READ,
@@ -71,5 +75,9 @@ int pmain()
             },
         };
         syscall(&kr);
+
+        for (int i = 0; i < 10000000;) {
+            i++;
+        }
     }
 }

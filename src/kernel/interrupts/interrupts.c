@@ -197,7 +197,7 @@ void isr_handler(registers_t* r)
     if (handler != NULL) {
         handler(r);
     } else {
-        klog(WARNING, "unhandled interrupt INT=%u ERROR=%u EIP=0x%x", r->int_no, r->error_code, r->eip);
+        klog(ERROR, "unhandled interrupt INT=%u ERROR=%u EIP=0x%x", r->int_no, r->error_code, r->eip);
     }
     if (r->int_no >= 32 && r->int_no < 48) {
         uint8_t irq_no = r->int_no - 32;

@@ -1,3 +1,4 @@
+
 [bits 32]
 [extern main]
 ; ; print via memory mapped VGA
@@ -6,5 +7,6 @@
 ; mov al, 'M' ; write 'X' in the middle of screen
 ; mov ah, 0x0f ; white on black
 ; mov [ds:ebx], eax
-call main
-jmp $
+section .kernel_entry
+    call main
+    jmp $

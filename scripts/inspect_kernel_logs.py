@@ -1,6 +1,7 @@
 import argparse
 import time
 from typing import List
+import re
 import os
 
 if __name__ == "__main__":
@@ -22,6 +23,13 @@ if __name__ == "__main__":
                 content = content[:-1]
         success_messages = content.count("kernel was initialized successfully!")
         init_messages = content.count("kernel is initializing...")
+        for line in content.splitlines():
+            reg = r'(WARN|FATAL|PANIC|ERROR).*'
+            match = re.match(reg, line)
+            if match is not None:
+                print(content)
+                print(f"\033[31mFAILED\033[0m: kernel log contain \"{match.group(1)}\" entry")
+                exit(1)
         if init_messages == 1 and success_messages == 1:
             if passed > 0.3:
                 print(content)

@@ -1,3 +1,5 @@
+#include "../include/process.h"
+#include "../include/syscall.h"
 #include "drivers/ata.h"
 #include "drivers/keyboard.h"
 #include "drivers/low_level.h"
@@ -10,12 +12,9 @@
 #include "libk/log.h"
 #include "libk/memory.h"
 #include "libk/string.h"
-#include "../include/process.h"
-#include "../include/syscall.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
-
 
 void dummy()
 {
@@ -29,15 +28,15 @@ Process* processes;
 uint32_t current_timeslice;
 #define MAX_PROCESSES 100
 
-void timer_callback(registers_t* registers)
+void timer_interrupt(registers_t* registers)
 {
     current_timeslice++;
-    uint8_t* vga = (uint8_t*)VGA_TEXT_ADDRESS;
-    if (processes[0].window.buffer != NULL) {
-        for (int j = 0; j < 25 * 80 * 2; j++) {
-            vga[j] = processes[0].window.buffer[j];
-        }
-    }
+    // uint8_t* vga = (uint8_t*)VGA_TEXT_ADDRESS;
+    // if (processes[0].window.buffer != NULL) {
+    //     for (int j = 0; j < 25 * 80 * 2; j++) {
+    //         vga[j] = processes[0].window.buffer[j];
+    //     }
+    // }
     return;
 }
 
@@ -50,7 +49,12 @@ void memcpy(void* dest, void* src, size_t n)
     }
 }
 
-void switch_task(registers_t *registers)
+void drive_interrupt(registers_t* registers)
+{
+    return; // not used
+}
+
+void switch_task(registers_t* registers)
 {
     processes[current_process_index].last_timeslice = current_timeslice;
     int32_t scheduled = current_process_index;
@@ -89,7 +93,7 @@ void syscall_handler(registers_t* registers)
     case KR_READ:
         size_t size = 512;
         void* buf = malloc(size);
-        enqueue_drive_read(buf, size, 0);
+        // enqueue_drive_read(buf, size, 0);
         processes[0].suspended = true;
         break;
     default:
@@ -107,9 +111,12 @@ int main()
     klog(INFO, "kernel is initializing...");
     init_idt();
     init_timer();
-    register_interrupt_handler(32, timer_callback);
-    register_interrupt_handler(33, keyboard_callback);
+    init_drive();
+    register_interrupt_handler(32, timer_interrupt);
+    register_interrupt_handler(33, keyboard_interrupt);
+    register_interrupt_handler(46, drive_interrupt);
     register_interrupt_handler(128, syscall_handler);
+
     asm volatile("sti");
     setup_kernel_heap();
     processes = malloc(sizeof(Process) * 10);

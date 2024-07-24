@@ -11,7 +11,7 @@
 
 char scancode_to_acsii(u8 scancode);
 
-void keyboard_callback(registers_t* r)
+void keyboard_interrupt(registers_t* r)
 {
     u8 scancode = inb(0x60);
     char symbol = scancode_to_acsii(scancode);
