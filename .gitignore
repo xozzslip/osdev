@@ -3,8 +3,6 @@
 *.o
 *.pyc
 __pycache__
-a.out
-cross-compiler/
+*.out
 .vscode/
-kernel/build/
-python-3.11.9/
+build/
