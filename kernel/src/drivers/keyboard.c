@@ -11,13 +11,12 @@
 
 char scancode_to_acsii(u8 scancode);
 
-void keyboard_callback(registers_t register)
+void keyboard_callback(registers_t* r)
 {
     u8 scancode = inb(0x60);
     char symbol = scancode_to_acsii(scancode);
     if (symbol != 0) {
         vga_text_write_byte(symbol, VGA_TEXT_WHITE_ON_BLACK);
-
     }
 }
 

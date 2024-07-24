@@ -3,14 +3,14 @@ extern isr_handler
 %macro ISR_NOERRCODE 1  ; define a macro, taking one parameter
   global isr%1        ; %1 accesses the first parameter.
   isr%1:
-    cli
-    push 0x00 ; this is dummy error code
-    push byte %1
+    push dword 0x00 ; this is dummy error code
+    push dword %1
     pusha ; EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
+    push esp
     call isr_handler
+    add esp, 0x04
     popa
     add esp, 0x08 ; this pops two entries
-    sti
     ; interrupt pushes 3 4-byte values onto the stack
     ; they are EIP, and two more (code segment I guess and some flags)
     ; iret pops up those values
@@ -20,13 +20,13 @@ extern isr_handler
 %macro ISR_WITH_ERRCODE 1
 global isr%1
 isr%1:
-    cli
-    push byte %1 ; error code was pushed implicitly
+    push dword %1 ; error code was pushed implicitly
     pusha
+    push esp
     call isr_handler
+    add esp, 0x04
     popa
     add esp, 0x08 ; this pops two entries (one of them is an error)
-    sti
     iret
 %endmacro
 

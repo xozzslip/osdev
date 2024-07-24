@@ -178,7 +178,7 @@ uint32_t dateToUnixTimestamp()
 }
 
 
-uint32_t read_unix_time_seconds()
+uint32_t read_unix_time()
 {
     reread_rtc();
     return dateToUnixTimestamp();

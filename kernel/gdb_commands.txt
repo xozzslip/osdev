@@ -1,5 +1,5 @@
 set confirm off
 set pagination off
 layout split
-break format.c:78
+break main
 continue

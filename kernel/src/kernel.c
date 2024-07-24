@@ -1,10 +1,10 @@
 #include "drivers/ata.h"
 #include "drivers/keyboard.h"
 #include "drivers/low_level.h"
+#include "drivers/rtc.h"
 #include "drivers/screen.h"
 #include "drivers/serial.h"
 #include "drivers/timer.h"
-#include "drivers/rtc.h"
 #include "interrupts/interrupts.h"
 #include "libk/assert.h"
 #include "libk/log.h"
@@ -25,12 +25,14 @@ void dummy()
              // call main instead of jumping into this file
 }
 
+uint32_t current_process_index;
 Process* processes;
-uint32_t timeslice_no;
+uint32_t current_timeslice;
+#define MAX_PROCESSES 100
 
-void timer_callback(registers_t registers)
+void timer_callback(registers_t* registers)
 {
-    timeslice_no++;
+    current_timeslice++;
     uint8_t* vga = (uint8_t*)VGA_TEXT_ADDRESS;
     if (processes[0].window.buffer != NULL) {
         for (int j = 0; j < 25 * 80 * 2; j++) {
@@ -49,14 +51,23 @@ void memcpy(void* dest, void* src, size_t n)
     }
 }
 
-void switch_task()
+void switch_task(registers_t *registers)
 {
+    processes[current_process_index].last_timeslice = current_timeslice;
+    int32_t scheduled = current_process_index;
+    for (int i = 0; i < MAX_PROCESSES; i++) {
+        if (!processes[i].running || processes[i].suspended) {
+            continue;
+        }
+        if (processes[i].last_timeslice <= processes[scheduled].last_timeslice) {
+            scheduled = i;
+        }
+    }
 }
 
-void syscall_handler(registers_t registers)
+void syscall_handler(registers_t* registers)
 {
-    KR* kr = (KR*)registers.eax;
-
+    KR* kr = (KR*)registers->eax;
     switch (kr->type) {
     case KR_RECV:
         if (streq(kr->request.recv.path, "/proc/window/resized")) {
@@ -109,10 +120,9 @@ int main()
     /*
         start first process
     */
-
     pmain();
 
-    asm volatile("int $128");
+
 
     for (;;) {
         asm volatile("hlt");

@@ -20,6 +20,8 @@ typedef struct {
     uint32_t id;
     WindowBuffer window;
     bool suspended;
+    bool running;
+    uint32_t last_timeslice;
 } Process;
 
 #endif // PROCESS_H

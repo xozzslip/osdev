@@ -70,7 +70,7 @@ typedef struct idt_entry idt_entry;
 
 // TODO: make sure that this is on 8 byte boundary (check intel guide 6.10)
 idt_entry idt[256];
-void (*interrupt_handlers[256])(registers_t);
+void (*interrupt_handlers[256])(registers_t*);
 
 idt_entry build_idt_entry(void (*handler)())
 {
@@ -186,37 +186,21 @@ void init_idt()
     __asm__ volatile("lidt %0" : : "m"(ptr));
 }
 
-void register_interrupt_handler(int int_no, void (*handler)(registers_t registers))
+void register_interrupt_handler(int int_no, void (*handler)(registers_t* registers))
 {
     interrupt_handlers[int_no] = handler;
 }
 
-void isr_handler(
-    uint32_t edi, uint32_t esi, uint32_t ebp, uint32_t esp, uint32_t ebx, uint32_t edx, uint32_t ecx, uint32_t eax,
-    uint8_t int_no, uint32_t error_code, uint32_t eip, uint32_t code_segment, uint32_t eflags)
+void isr_handler(registers_t* r)
 {
-
-    registers_t registers;
-    registers.edi = edi;
-    registers.esi = esi;
-    registers.ebp = ebp;
-    registers.esp = esp;
-    registers.ebx = ebx;
-    registers.edx = edx;
-    registers.ecx = ecx;
-    registers.eax = eax;
-    registers.eip = eip;
-    registers.code_segment = code_segment;
-    registers.eflags = eflags;
-
-    void (*handler)(registers_t) = interrupt_handlers[int_no];
+    void (*handler)(registers_t*) = interrupt_handlers[r->int_no];
     if (handler != NULL) {
-        handler(registers);
+        handler(r);
     } else {
-        klog(WARNING, "unhandled interrupt INT=%u ERROR=%u EIP=0x%x", int_no, error_code, eip);
+        klog(WARNING, "unhandled interrupt INT=%u ERROR=%u EIP=0x%x", r->int_no, r->error_code, r->eip);
     }
-    if (int_no >= 32 && int_no < 48) {
-        uint8_t irq_no = int_no - 32;
+    if (r->int_no >= 32 && r->int_no < 48) {
+        uint8_t irq_no = r->int_no - 32;
         send_eoi_pic(irq_no);
     }
     return;
