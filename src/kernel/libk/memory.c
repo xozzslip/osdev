@@ -1,3 +1,4 @@
+#include "memory.h"
 #include "../drivers/screen.h"
 #include "assert.h"
 #include "log.h"
@@ -6,14 +7,13 @@
 #include <stddef.h>
 #include <stdint.h>
 
-void run_tests();
+void memory_run_tests();
 
 // Kernel memory allocation implemented
 // using fixed chunks allocation
 
-#define CHUNK_SIZE 512 // 512 bytes
-#define KERNEL_HEAP_START 0x200000 // according to memory map
 #define KERNEL_HEAP_LIMIT 10 * 1024 * 1024 // 10 MiB
+#define CHUNK_SIZE 512 // 512 bytes
 
 // this struct is written by BIOS
 struct AddressRangeDescriptor {
@@ -92,7 +92,7 @@ void setup_kernel_heap()
             is_free_table[chunk_no] = true;
         }
     }
-    run_tests();
+    memory_run_tests();
 }
 
 typedef struct {
@@ -177,12 +177,12 @@ void free(void* p)
     header->allocated_chunks = 0;
 }
 
-void run_tests()
+void memory_run_tests()
 {
     void* p1 = malloc(3000);
     void* p2 = malloc(1000);
     klog(DEBUG, "p1=%d p2=%d p2-p1=%d", p1, p2, p2 - p1);
-    assert((p2 - p1) >= 3000);
+    assert((p2 - p1) >= 3000, "test1");
 
     free(p1);
     void* p3 = malloc(100);
@@ -190,8 +190,8 @@ void run_tests()
     void* p5 = malloc(2700);
 
     klog(DEBUG, "p3=%d", p3);
-    assert(p3 == p1);
-    assert(p5 > (p2 + 1000));
+    assert(p3 == p1, "test2");
+    assert(p5 > (p2 + 1000), "test3");
 
     free(p2);
     free(p3);
@@ -199,5 +199,5 @@ void run_tests()
 
     void* p6 = malloc(5000);
     void* p7 = malloc(4000);
-    assert(p7 == p1);
+    assert(p7 == p1, "test4");
 }

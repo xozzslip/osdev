@@ -109,6 +109,7 @@ int main()
 
     init_serial();
     klog(INFO, "kernel is initializing...");
+    setup_kernel_heap();
     init_idt();
     init_timer();
     init_drive();
@@ -118,7 +119,7 @@ int main()
     register_interrupt_handler(128, syscall_handler);
 
     asm volatile("sti");
-    setup_kernel_heap();
+
     processes = malloc(sizeof(Process) * 10);
     klog(INFO, "kernel was initialized successfully!");
 

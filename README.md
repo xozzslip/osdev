@@ -3,7 +3,7 @@
 Run to set path to cross-compiler \
 `source env.sh` \
 Then \
-`make run` or `make debug`
+`make run` or `make debug` or `make test`
 
 
 ## Memory Map
@@ -15,15 +15,23 @@ Then \
 0x07E00-0x7FFFF    memory for my kernel (480.5 KiB) \
 0x80000-0xFFFFF    some BIOS stuff (including VGA mapped memory) \
 0x100000-0x1fffff  kernel stack (1 MiB) (grows backward) \
-0x200000-END       kernel heap \
+0x200000-END       kernel heap
 
+## Hard Drive Map
+
+sector  1           MBR: boot code and partition table (512B) \
+sectors 2-128       kernel code (63.5KiB) \
+sectors 129-2048    partition Gap \
+sectors 2049-END    partition #1 with FAT32 filesystem
+
+Note: sectors and partitions are enumerated from 1
 
 ## Some links
+
 Bios memory map https://wiki.osdev.org/Memory_Map_(x86) \
 FAT32 tutorial https://www.pjrc.com/tech/8051/ide/fat32.html \
-Build cross compiler https://wiki.osdev.org/GCC_Cross-Compiler#Downloading_the_Source_Code \
-
-
+Hard Drive tutorial https://wiki.osdev.org/ATA_PIO_Mode \
+Build cross compiler https://wiki.osdev.org/GCC_Cross-Compiler
 
 ## Dependencies:
 
@@ -32,7 +40,7 @@ Build cross compiler https://wiki.osdev.org/GCC_Cross-Compiler#Downloading_the_S
 3) mtools for managing FAT32 disk images without mounting them. I use this since mounting require root permissions
 4) qemu
 
-#### How to install python that can be used by GDB:
+#### How to install python that can be linked to GDB:
 
 Install Python 3.11. Because my GDB dependant on this exact version. On my machine I do something like this in Python3.11 sources directory: \
 ```

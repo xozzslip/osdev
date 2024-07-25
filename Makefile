@@ -7,10 +7,11 @@ QEMU = qemu-system-i386 -m 128M -drive format=raw,file=build/disk.img
 $(shell find src -type d -exec sh -c 'mkdir -p build/$$(echo "{}" | sed "s|^src||")' \;)
 
 # Source files
-KERNEL_C = $(shell find src/kernel -type f -name '*.c')
-KERNEL_ASM = $(shell find src/kernel -type f -name '*.asm')
 KERNEL_H = $(shell find src/kernel -type f -name '*.h')
 KERNEL_H += $(shell find src/include -type f -name '*.h')
+
+KERNEL_C = $(shell find src/kernel -type f -name '*.c')
+KERNEL_ASM = $(shell find src/kernel -type f -name '*.asm')
 KERNEL_OBJ = $(patsubst src/%.c,build/%.o,$(KERNEL_C))
 KERNEL_OBJ += $(patsubst src/%.asm,build/%.o,$(KERNEL_ASM))
 KERNEL_LD = src/kernel/linker.ld
@@ -50,7 +51,7 @@ disasm: build/kernel.elf
 build/kernel.bin: $(KERNEL_LD) $(KERNEL_OBJ)
 	$(LD) $(KERNEL_OBJ) -o $@ -T $(KERNEL_LD) --oformat binary
 
-build/%.o: src/%.c $(H_FILES)
+build/%.o: src/%.c $(KERNEL_H)
 	$(CC) -Werror -O0 -g -ffreestanding -c $< -o $@
 
 build/%.o: src/%.asm
