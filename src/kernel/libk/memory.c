@@ -147,6 +147,9 @@ void* malloc(size_t requested_size)
         .start = p,
         .allocated_chunks = requested_chunks,
     };
+    for (int i = 0; i < requested_size; i++) {
+        ((uint8_t*)p)[i] = 0;
+    }
     return p;
 }
 

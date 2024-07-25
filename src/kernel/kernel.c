@@ -7,6 +7,7 @@
 #include "drivers/screen.h"
 #include "drivers/serial.h"
 #include "drivers/timer.h"
+#include "drivers/fs.h"
 #include "interrupts/interrupts.h"
 #include "libk/assert.h"
 #include "libk/log.h"
@@ -113,6 +114,7 @@ int main()
     init_idt();
     init_timer();
     init_drive();
+    init_filesystem();
     register_interrupt_handler(32, timer_interrupt);
     register_interrupt_handler(33, keyboard_interrupt);
     register_interrupt_handler(46, drive_interrupt);

@@ -7,4 +7,5 @@
 #include <stdint.h>
 
 void init_drive();
+void drive_read_blocking(uint32_t lba, uint32_t sectors_count, void* buf);
 #endif // ATA_H
