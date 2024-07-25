@@ -74,6 +74,17 @@ VolumeID parse_volume_id(uint8_t* buf)
 
 #define MAX_QUEUE_SIZE 100
 
+typedef struct {
+    char short_name[11];
+    uint32_t first_cluster;
+    uint32_t file_size;
+    bool is_dir;
+} File;
+
+File parse_file_entry(uint8_t* buf)
+{
+}
+
 void init_filesystem()
 {
     uint8_t* mbr_buf = (uint8_t*)malloc(512);
@@ -96,6 +107,13 @@ void init_filesystem()
     assert(v.signature == 0xaa55, "fat32 signature is wrong");
     klog(INFO, "found FAT filesystem at partition #1");
     klog(DEBUG, "fat parameters dump: bytes_per_sector=%d sectors_per_cluster=%d number_of_reserved_sectors=%d number_of_fats=%d sectors_per_fat=%d root_directory_first_cluster=%d", v.bytes_per_sector, v.sectors_per_cluster, v.number_of_reserved_sectors, v.number_of_fats, v.sectors_per_fat, v.root_directory_first_cluster);
+
+    assert(v.number_of_fats == 2, "count of fat tables must be 2");
+}
+
+void file_read_blocking(char* filename, size_t offset, size_t count, void* buf)
+{
+
 }
 
 void enqueue_drive_request(void* buf, size_t size, uint32_t lba, RequestType type)

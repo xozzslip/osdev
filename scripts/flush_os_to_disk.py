@@ -62,14 +62,14 @@ def create_disk_image(path: str):
             f.write("Hello World!\n")
 
         shell(f"dd if=/dev/zero of={fat32_path} bs=1M count=39 status=none")
-        shell(f"mformat -i {fat32_path} -F ::")
+        shell(f"mformat -c 2 -i {fat32_path} -F ::")
         shell(f"mmd -i {fat32_path} ::/home")
         shell(f"mcopy -i {fat32_path} {hello_path} ::/home")
 
         with open(fat32_path, "rb") as f:
             fat32_partition_bytes = f.read()
 
-    bytes_to_flush = bytearray(1024 ** 2)         # 1 MiB
+    bytes_to_flush = bytearray(1 * 1024 ** 2)         # 1 MiB
     bytes_to_flush += fat32_partition_bytes       # 39 MiB
     assert len(bytes_to_flush) == 40 * 1024 ** 2  # 40 MiB
     # write MBR signature
