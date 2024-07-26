@@ -12,17 +12,31 @@ typedef enum {
     WRITE,
 } RequestType;
 
-typedef struct DriverRequest DriverRequest;
+typedef struct Request Request;
 
-struct DriverRequest {
+typedef enum {
+    FILE_LOOKUP,
+    FILE_READ,
+} State;
+
+struct Request {
+    char* filepath;
     void* buf;
     size_t size;
     RequestType type;
+    uint32_t request_id;
 
-    DriverRequest* next;
+    /*
+        lookup of files is split to levels
+        first level in   "/" root directory
+        second level in  "/home/" first subdirectory
+        last level reads "/home/hello.txt" file itself
+    */
+
+    uint32_t lookup_level;
+    uint32_t cluster_no;
+    State state;
 };
-
-DriverRequest* queue;
 
 typedef struct {
     uint8_t type;
@@ -72,6 +86,15 @@ VolumeID parse_volume_id(uint8_t* buf)
     };
 }
 
+typedef struct {
+    VolumeID v; // config of FAT32 filesystem
+    void* buf; // buffer used for all reads with size of a cluster
+    uint32_t lba_begin; // address of partition where FAT32 lives
+    Request* queue; // queue of user's requests
+} FS;
+
+FS fs;
+
 #define MAX_QUEUE_SIZE 100
 
 typedef struct {
@@ -109,45 +132,113 @@ void init_filesystem()
     klog(DEBUG, "fat parameters dump: bytes_per_sector=%d sectors_per_cluster=%d number_of_reserved_sectors=%d number_of_fats=%d sectors_per_fat=%d root_directory_first_cluster=%d", v.bytes_per_sector, v.sectors_per_cluster, v.number_of_reserved_sectors, v.number_of_fats, v.sectors_per_fat, v.root_directory_first_cluster);
 
     assert(v.number_of_fats == 2, "count of fat tables must be 2");
+
+    fs.buf = malloc(v.sectors_per_cluster * 512);
+    fs.v = v;
+    fs.lba_begin = partitions[0].lba_begin;
 }
 
-void file_read_blocking(char* filename, size_t offset, size_t count, void* buf)
+void fs_send_read_cluster_command(uint32_t cluster_no)
 {
-
+    uint32_t lba = fs.lba_begin + fs.v.number_of_reserved_sectors + fs.v.number_of_fats * fs.v.sectors_per_fat + cluster_no * fs.v.sectors_per_cluster;
+    drive_send_read_command(lba, fs.v.sectors_per_cluster, fs.buf);
 }
 
-void enqueue_drive_request(void* buf, size_t size, uint32_t lba, RequestType type)
+void fs_read_blocking(char* filename, size_t offset, size_t count, void* buf)
 {
+}
 
-    DriverRequest* cur = queue;
-    DriverRequest* last = NULL;
-    int queue_size = 0;
-    while (cur != NULL) {
-        last = cur;
-        cur = cur->next;
-        queue_size += 1;
+void fs_read_nonblocking(char* filename, size_t offset, size_t count, void* buf)
+{
+}
+
+char* get_level_from_filepath(char* filepath, uint32_t lookup_level)
+{
+    uint32_t current = 0;
+    char* res = filepath;
+    while (*filepath != '\0') {
+        if (*filepath == '\\') {
+            current++;
+            if (current > lookup_level) {
+                break;
+            } else if (current == lookup_level) {
+                res = filepath + 1;
+            }
+        }
+        filepath++;
     }
-    if (queue_size >= MAX_QUEUE_SIZE) {
-        klog(FATAL, "ATA driver queue size is too big, can't enqueue request");
-        panic();
+    return res;
+}
+
+bool strcmp(char* a, char* b)
+{
+    return true;
+}
+void fs_next_timeslice()
+{
+    if (fs.queue == NULL) {
+        return; // nothing to do
     }
-    DriverRequest* request = (DriverRequest*)malloc(sizeof(DriverRequest));
-    request->buf = buf;
-    request->size = size;
-    request->type = type;
-    if (last != NULL) {
-        last->next = request;
-    } else {
-        queue = request;
+    Request* r = fs.queue;
+    assert(r->filepath[0] == '\\', "filename must start with \\");
+
+    if (r->state == FILE_LOOKUP) {
+        if (r->lookup_level == 0) {
+            fs_send_read_cluster_command(fs.v.root_directory_first_cluster);
+            r->lookup_level++;
+            return;
+        }
+        char* lookup_file = get_level_from_filepath(r->filepath, r->lookup_level);
+
+        File files[16];
+        int found = -1;
+        for (int i = 0; i < 16; i++) {
+            if (strcmp(files[i].short_name, lookup_file)) {
+                found = i;
+                break;
+            }
+        }
+        uint32_t next_cluster_no;
+        if (found == -1) {
+            next_cluster_no = 10; // find next cluster in FAT table
+        } else {
+            //
+        }
     }
 }
 
-void enqueue_drive_read(void* buf, size_t size, size_t lba)
-{
-    return enqueue_drive_request(buf, size, lba, READ);
-}
+// void enqueue_drive_request(void* buf, size_t size, uint32_t lba, RequestType type)
+// {
 
-void enqueue_drive_write(void* buf, size_t size, size_t lba)
-{
-    return enqueue_drive_request(buf, size, lba, WRITE);
-}
+//     Request* cur = queue;
+//     Request* last = NULL;
+//     int queue_size = 0;
+//     while (cur != NULL) {
+//         last = cur;
+//         cur = cur->next;
+//         queue_size += 1;
+//     }
+//     if (queue_size >= MAX_QUEUE_SIZE) {
+//         klog(FATAL, "ATA driver queue size is too big, can't enqueue request");
+//         panic();
+//     }
+//     Request* request = (Request*)malloc(sizeof(Request));
+//     request->buf = buf;
+//     request->size = size;
+//     request->type = type;
+//     if (last != NULL) {
+//         last->next = request;
+//     } else {
+//         queue = request;
+//     }
+// }
+
+// void enqueue_drive_read(void* buf, size_t size, size_t lba)
+// {
+//     return enqueue_drive_request(buf, size, lba, READ);
+// }
+
+// void enqueue_drive_write(void* buf, size_t size, size_t lba)
+// {
+//     return enqueue_drive_request(buf, size, lba, WRITE);
+// }
