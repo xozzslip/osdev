@@ -14,27 +14,26 @@ typedef enum {
 
 typedef struct Request Request;
 
-typedef enum {
-    FILE_LOOKUP,
-    FILE_READ,
-} State;
+typedef struct {
 
-struct Request {
-    char* filepath;
-    void* buf;
-    size_t size;
-    RequestType type;
-    uint32_t request_id;
-
+    uint32_t fetched_cluster;
     /*
         lookup of files is split to levels
         first level in   "/" root directory
         second level in  "/home/" first subdirectory
         last level reads "/home/hello.txt" file itself
     */
+    uint32_t current_dir_level;
+    bool fetched_file;
+} State;
 
-    uint32_t lookup_level;
-    uint32_t cluster_no;
+struct Request {
+    char* filepath;
+    void* buf;
+    size_t size;
+    uint32_t offset;
+    RequestType type;
+    uint32_t request_id;
     State state;
 };
 
@@ -86,14 +85,10 @@ VolumeID parse_volume_id(uint8_t* buf)
     };
 }
 
-typedef struct {
-    VolumeID v; // config of FAT32 filesystem
-    void* buf; // buffer used for all reads with size of a cluster
-    uint32_t lba_begin; // address of partition where FAT32 lives
-    Request* queue; // queue of user's requests
-} FS;
-
-FS fs;
+uint32_t SECTORS_PER_CLUSTER;
+uint32_t ROOT_DIR_FIRST_CLUSTER;
+uint32_t CLUSTERS_LBA_BEGIN;
+uint32_t FAT_LBA_BEGIN;
 
 #define MAX_QUEUE_SIZE 100
 
@@ -106,6 +101,11 @@ typedef struct {
 
 File parse_file_entry(uint8_t* buf)
 {
+}
+
+void parse_files(uint8_t* from, File* to, size_t files_count)
+{
+    uint32_t* files = from;
 }
 
 void init_filesystem()
@@ -133,19 +133,33 @@ void init_filesystem()
 
     assert(v.number_of_fats == 2, "count of fat tables must be 2");
 
-    fs.buf = malloc(v.sectors_per_cluster * 512);
-    fs.v = v;
-    fs.lba_begin = partitions[0].lba_begin;
+    FAT_LBA_BEGIN = partitions[0].lba_begin;
+    CLUSTERS_LBA_BEGIN = FAT_LBA_BEGIN + v.number_of_reserved_sectors + v.number_of_fats * v.sectors_per_fat;
+    SECTORS_PER_CLUSTER = v.sectors_per_cluster;
+    ROOT_DIR_FIRST_CLUSTER = v.root_directory_first_cluster;
 }
 
 void fs_send_read_cluster_command(uint32_t cluster_no)
 {
-    uint32_t lba = fs.lba_begin + fs.v.number_of_reserved_sectors + fs.v.number_of_fats * fs.v.sectors_per_fat + cluster_no * fs.v.sectors_per_cluster;
-    drive_send_read_command(lba, fs.v.sectors_per_cluster, fs.buf);
+}
+
+uint32_t cluster_to_lba(uint32_t cluster)
+{
+    return CLUSTERS_LBA_BEGIN + cluster * SECTORS_PER_CLUSTER;
 }
 
 void fs_read_blocking(char* filename, size_t offset, size_t count, void* buf)
 {
+    void* buf = malloc(512 * SECTORS_PER_CLUSTER);
+    drive_send_read_command(
+        cluster_to_lba(ROOT_DIR_FIRST_CLUSTER),
+        SECTORS_PER_CLUSTER,
+        buf);
+    while (!is_drive_ready()) {
+        continue;
+    }
+    File* files = malloc(sizeof(File) * 16 * SECTORS_PER_CLUSTER);
+
 }
 
 void fs_read_nonblocking(char* filename, size_t offset, size_t count, void* buf)
@@ -174,13 +188,16 @@ bool strcmp(char* a, char* b)
 {
     return true;
 }
-void fs_next_timeslice()
+
+void fs_run_timeslice()
 {
     if (fs.queue == NULL) {
         return; // nothing to do
     }
     Request* r = fs.queue;
     assert(r->filepath[0] == '\\', "filename must start with \\");
+
+    // fs.buf contains previously read cluster
 
     if (r->state == FILE_LOOKUP) {
         if (r->lookup_level == 0) {
@@ -191,15 +208,15 @@ void fs_next_timeslice()
         char* lookup_file = get_level_from_filepath(r->filepath, r->lookup_level);
 
         File files[16];
-        int found = -1;
+        int file_index = -1;
         for (int i = 0; i < 16; i++) {
             if (strcmp(files[i].short_name, lookup_file)) {
-                found = i;
+                file_index = i;
                 break;
             }
         }
         uint32_t next_cluster_no;
-        if (found == -1) {
+        if (file_index == -1) {
             next_cluster_no = 10; // find next cluster in FAT table
         } else {
             //

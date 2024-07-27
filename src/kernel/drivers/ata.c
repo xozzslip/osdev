@@ -92,7 +92,7 @@ void drive_send_read_command(uint32_t lba, uint32_t sectors_count, void* buf)
     klog(DEBUG, "read sectors command was sent to drive: lba=%d sectors=%d buf=0x%x", lba, sectors_count, buf);
 }
 
-bool is_drive_bus_ready()
+bool is_drive_ready()
 {
     Status status = parse_status(inb(ALTERNATE_STATUS_REGISTER));
     assert(!status.err && !status.df, "drive error");
