@@ -6,13 +6,14 @@
 #define __STRINGIFY(x) #x
 #define __TOSTRING(x) __STRINGIFY(x)
 
-#define assert(EXP, MSG)                    \
+#define assert(EXP, MSG, ...)               \
     do {                                    \
         if (!(EXP)) {                       \
             klog(                           \
                 FATAL,                      \
                 "assertion \"" #EXP         \
-                "\" failed: " MSG);         \
+                "\" failed: " MSG,          \
+                ##__VA_ARGS__);             \
             klog(                           \
                 FATAL,                      \
                 "kernel panic at " __FILE__ \

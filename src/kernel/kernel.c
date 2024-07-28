@@ -1,5 +1,6 @@
 #include "../include/process.h"
 #include "../include/syscall.h"
+#include "../include/string.h"
 #include "drivers/ata.h"
 #include "drivers/keyboard.h"
 #include "drivers/low_level.h"
@@ -12,7 +13,6 @@
 #include "libk/assert.h"
 #include "libk/log.h"
 #include "libk/memory.h"
-#include "libk/string.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -74,7 +74,7 @@ void syscall_handler(registers_t* registers)
     KR* kr = (KR*)registers->eax;
     switch (kr->type) {
     case KR_RECV:
-        if (streq(kr->request.recv.path, "/proc/window/resized")) {
+        if (strcmp(kr->request.recv.path, "/proc/window/resized") == 0) {
             WindowResizedEvent event = {
                 .width = 80,
                 .height = 25,
@@ -85,7 +85,7 @@ void syscall_handler(registers_t* registers)
         }
         break;
     case KR_SEND:
-        if (streq(kr->request.send.path, "/proc/window/update")) {
+        if (strcmp(kr->request.send.path, "/proc/window/update") == 0) {
             WindowBuffer window = { 0 };
             memcpy(&window, kr->request.send.buf, sizeof(window));
             processes[0].window = window;
@@ -124,6 +124,8 @@ int main()
 
     processes = malloc(sizeof(Process) * 10);
     klog(INFO, "kernel was initialized successfully!");
+
+    fs_read_blocking("/home", 0, 1, NULL);
 
     /*
         start first process

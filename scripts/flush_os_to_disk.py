@@ -59,7 +59,7 @@ def create_disk_image(path: str):
         hello_path = os.path.join(temp_dir, "hello.txt")
 
         with open(os.path.join(temp_dir, "hello.txt"), "w") as f:
-            f.write("Hello World!\n")
+            f.write("Henlo Word!\n")
 
         shell(f"dd if=/dev/zero of={fat32_path} bs=1M count=39 status=none")
         shell(f"mformat -c 2 -i {fat32_path} -F ::")

@@ -135,7 +135,7 @@ void drive_read_blocking(uint32_t lba, uint32_t sectors_count, void* buf)
     drive_send_read_command(lba, sectors_count, buf);
 
     for (int i = 0; i < sectors_count; i++) {
-        while (!is_drive_bus_ready()) {
+        while (!is_drive_ready()) {
             continue; // busy wait
         }
         drive_receive_sector();
