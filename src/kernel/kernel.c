@@ -125,7 +125,7 @@ int main()
     processes = malloc(sizeof(Process) * 10);
     klog(INFO, "kernel was initialized successfully!");
 
-    fs_read_blocking("/home", 0, 1, NULL);
+    fs_read_blocking("/home/hello.txt", 0, 1, NULL);
 
     /*
         start first process

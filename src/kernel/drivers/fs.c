@@ -166,6 +166,10 @@ File parse_file_entry(uint8_t* buf)
     bool directory = (attrib >> 4) & 1; // Is a subdirectory
     bool archive = (attrib >> 5) & 1; // Has been changed since last backup
 
+    bool attrib_has_zeros = !(((attrib >> 6) & 1) || (attrib >> 7) & 1);
+
+    assert (attrib_has_zeros, "buf does not belong to directory");
+
     File file = { 0 };
     for (int i = 0; i < 11; i++) {
         file.short_name[i] = buf[i];
@@ -227,45 +231,64 @@ uint32_t cluster_to_lba(uint32_t cluster)
     return CLUSTERS_LBA_BEGIN + (cluster - 2) * SECTORS_PER_CLUSTER;
 }
 
+bool fs_read_dir_and_find_file(uint32_t dir_first_cluster, char *filename, File* res) {
+    uint32_t cluster = dir_first_cluster;
+    uint8_t* buf = (uint8_t*)malloc(512 * SECTORS_PER_CLUSTER);
+    // TODO: scan more clusters if file not found in first
+    drive_read_blocking(
+        cluster_to_lba(cluster),
+        SECTORS_PER_CLUSTER,
+        buf);
+    for (int i = 0; i < DIR_RECORDS_PER_CLUSTER; i++) {
+        uint8_t* file_entry = buf + DIR_RECORD_SIZE * i;
+        if (file_entry[0] == 0) {
+            break;
+        }
+        if (file_entry[0] == 0xE5) {
+            // empty
+            continue;
+        }
+        File file = parse_file_entry(file_entry);
+        klog(DEBUG, "found file \"%s\"", file.short_name);
+        if (strcmp(file.short_name, filename) == 0) {
+            *res = file;
+            free(buf);
+            return true;
+        }
+    }
+    free(buf);
+    return false;
+
+}
+
 int32_t fs_read_blocking(char* filepath, size_t offset, size_t count, void* write_to_buf)
 {
     klog(DEBUG, "reading files...");
     uint8_t* buf = (uint8_t*)malloc(512 * SECTORS_PER_CLUSTER);
-    uint32_t cluster_to_read = ROOT_DIR_FIRST_CLUSTER;
+    uint32_t cluster = ROOT_DIR_FIRST_CLUSTER;
     uint32_t filepath_depth = get_filepath_depth(filepath);
     uint32_t lookup_dir_level = 0;
-    bool file_found = false;
-    File file;
+
+    File source;
+
     for (int i = 0; i < filepath_depth; i++) {
-        file_found = false;
-        drive_read_blocking(
-            cluster_to_lba(cluster_to_read),
-            SECTORS_PER_CLUSTER,
-            buf);
-        char lookup_name[12] = { 0 };
-        get_level_from_filepath(filepath, lookup_dir_level, lookup_name);
-        klog(DEBUG, "lookup_name %s", lookup_name);
-        for (int i = 0; i < DIR_RECORDS_PER_CLUSTER; i++) {
-            uint8_t* file_entry = buf + DIR_RECORD_SIZE * i;
-            if (file_entry[0] == 0) {
-                break;
-            }
-            if (file_entry[0] == 0xE5) {
-                // empty
-                continue;
-            }
-            file = parse_file_entry(file_entry);
-            klog(DEBUG, "found file: %s %s", file.short_name, lookup_name);
-            if (strcmp(file.short_name, lookup_name) == 0) {
-                file_found = true;
-                break;
-            }
-        }
+        char name[12] = { 0 };
+        get_level_from_filepath(filepath, lookup_dir_level, name);
+        File file;
+        bool file_found = fs_read_dir_and_find_file(cluster, name, &file);
         if (!file_found) {
+            klog(DEBUG, "file %s not found", name);
+            free(buf);
             return -1;
         }
-        cluster_to_read = file.first_cluster;
+        cluster = file.first_cluster;
+        if (i == filepath_depth - 1) {
+            source = file;
+        }
     }
+    klog(DEBUG, "read file %s size=%d", source.short_name, source.file_size);
+    free(buf);
+    return 0;
 }
 
 void fs_read_nonblocking(char* filename, size_t offset, size_t count, void* buf)
