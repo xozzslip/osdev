@@ -89,7 +89,7 @@ void drive_send_read_command(uint32_t lba, uint32_t sectors_count, void* buf)
     current.running = true;
     current.buf = buf;
 
-    klog(DEBUG, "read sectors command was sent to drive: lba=%d sectors=%d buf=0x%x", lba, sectors_count, buf);
+    klog(DEBUG, "sending read sectors command to drive: lba=%d sectors=%d buf=0x%x", lba, sectors_count, buf);
 }
 
 bool is_drive_ready()
@@ -131,7 +131,6 @@ void drive_receive_sector()
 
 void drive_read_blocking(uint32_t lba, uint32_t sectors_count, void* buf)
 {
-    klog(DEBUG, "request state %d", current.running);
     drive_send_read_command(lba, sectors_count, buf);
 
     for (int i = 0; i < sectors_count; i++) {

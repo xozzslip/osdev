@@ -2,6 +2,6 @@
 #define FS_H
 
 void init_filesystem();
-void fs_read_blocking(char* filename, size_t offset, size_t count, void* buf);
+int fs_read(char* filepath, size_t offset, size_t bytes, void* buf);
 
 #endif // FS_H

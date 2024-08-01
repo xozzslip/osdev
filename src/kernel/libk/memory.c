@@ -171,7 +171,7 @@ void free(void* p)
     }
     uint32_t i = (uint32_t)(allocated - KERNEL_HEAP_START) / CHUNK_SIZE;
     uint32_t j = i + header->allocated_chunks;
-    klog(DEBUG, "freeing p=%d chunks=%d-%d", allocated, i, j);
+    // klog(DEBUG, "freeing p=%d chunks=%d-%d", allocated, i, j);
     bool* is_free_table = (bool*)KERNEL_HEAP_START;
     for (uint32_t k = i; k <= j; k++) {
         is_free_table[k] = true;

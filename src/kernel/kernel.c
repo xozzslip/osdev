@@ -1,14 +1,14 @@
 #include "../include/process.h"
-#include "../include/syscall.h"
 #include "../include/string.h"
+#include "../include/syscall.h"
 #include "drivers/ata.h"
+#include "drivers/fs.h"
 #include "drivers/keyboard.h"
 #include "drivers/low_level.h"
 #include "drivers/rtc.h"
 #include "drivers/screen.h"
 #include "drivers/serial.h"
 #include "drivers/timer.h"
-#include "drivers/fs.h"
 #include "interrupts/interrupts.h"
 #include "libk/assert.h"
 #include "libk/log.h"
@@ -124,8 +124,8 @@ int main()
 
     processes = malloc(sizeof(Process) * 10);
     klog(INFO, "kernel was initialized successfully!");
-
-    fs_read_blocking("/home/hello.txt", 0, 1, NULL);
+    char* filepath = "/home/hello.txt";
+    fs_read(filepath, 0, 10, NULL);
 
     /*
         start first process

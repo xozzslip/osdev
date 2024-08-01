@@ -56,7 +56,7 @@ Partition parse_partition(uint8_t* buf)
     };
 }
 
-uint32_t get_filepath_depth(char* filepath)
+uint32_t calc_filepath_depth(char* filepath)
 {
     assert(filepath[0] == '/', "filepath must start from \"/\"");
     uint32_t depth = 0;
@@ -74,7 +74,7 @@ uint32_t get_filepath_depth(char* filepath)
     return depth;
 }
 
-char* get_level_from_filepath(char* filepath, uint32_t lookup_level, char* result)
+char* copy_filename_level(char* filepath, uint32_t lookup_level, char* result)
 {
     assert(filepath[0] == '/', "filepath must start from \"/\"");
     uint32_t current_level = -1;
@@ -101,7 +101,6 @@ char* get_level_from_filepath(char* filepath, uint32_t lookup_level, char* resul
         } else {
             result[i] = s[i];
         }
-
         i++;
     }
 }
@@ -137,11 +136,15 @@ VolumeID parse_volume_id(uint8_t* buf)
 }
 
 uint32_t SECTORS_PER_CLUSTER;
+uint32_t BYTES_PER_CLUSTER;
 uint32_t ROOT_DIR_FIRST_CLUSTER;
 uint32_t CLUSTERS_LBA_BEGIN;
-uint32_t FAT_LBA_BEGIN;
+uint32_t FAT_PARTITION_LBA_BEGIN;
+uint32_t FAT_TABLE_LBA_BEGIN;
 uint32_t DIR_RECORD_SIZE;
 uint32_t DIR_RECORDS_PER_CLUSTER; // each file/subdirectory in directory has size of 32 bytes
+uint32_t FAT_TABLE_ENTRIES_PER_SECTOR;
+const uint32_t NO_MORE_CLUSTERS = 0xFFFFFFFF;
 
 #define MAX_QUEUE_SIZE 100
 
@@ -154,10 +157,9 @@ typedef struct {
 
 File parse_file_entry(uint8_t* buf)
 {
-
     uint8_t attrib = *((uint8_t*)(buf + 11));
-    uint16_t first_cluster_lo = *((uint16_t*)(buf + 20));
-    uint16_t first_cluster_hi = *((uint16_t*)(buf + 26));
+    uint16_t first_cluster_hi = *((uint16_t*)(buf + 20));
+    uint16_t first_cluster_lo = *((uint16_t*)(buf + 26));
     uint32_t file_size = *((uint32_t*)(buf + 28));
     bool read_only = (attrib >> 0) & 1; // Should not allow writing
     bool hidden = (attrib >> 1) & 1; // Should not show in dir listing
@@ -167,22 +169,31 @@ File parse_file_entry(uint8_t* buf)
     bool archive = (attrib >> 5) & 1; // Has been changed since last backup
 
     bool attrib_has_zeros = !(((attrib >> 6) & 1) || (attrib >> 7) & 1);
-
-    assert (attrib_has_zeros, "buf does not belong to directory");
+    assert(attrib_has_zeros, "buf does not belong to directory");
 
     File file = { 0 };
-    for (int i = 0; i < 11; i++) {
-        file.short_name[i] = buf[i];
-    }
-    for (int i = 10; i >= 0; i--) {
-        if (file.short_name[i] == 0x20) {  // short name has trailing spaces by spec
-            file.short_name[i] = 0;
-        } else {
+    char* name = file.short_name;
+
+    for (int i = 0; i < 8; i++) {
+        if (buf[i] == 0x20) {
             break;
         }
+        *name = buf[i];
+        name++;
     }
-    file.short_name[11] = '\0';
-    file.first_cluster = first_cluster_lo + first_cluster_hi << 16;
+    if (buf[8] != 0x20) {
+        *name = '.';
+        name++;
+    }
+    for (int i = 8; i < 11; i++) {
+        if (buf[i] == 0x20) {
+            break;
+        }
+        *name = buf[i];
+        name++;
+    }
+
+    file.first_cluster = first_cluster_lo + (first_cluster_hi << 16);
     file.file_size = file_size;
     file.is_dir = directory;
     return file;
@@ -213,12 +224,15 @@ void init_filesystem()
 
     assert(v.number_of_fats == 2, "count of fat tables must be 2");
 
-    FAT_LBA_BEGIN = partitions[0].lba_begin;
-    CLUSTERS_LBA_BEGIN = FAT_LBA_BEGIN + v.number_of_reserved_sectors + v.number_of_fats * v.sectors_per_fat;
+    FAT_PARTITION_LBA_BEGIN = partitions[0].lba_begin;
+    FAT_TABLE_LBA_BEGIN = FAT_PARTITION_LBA_BEGIN + v.number_of_reserved_sectors;
+    CLUSTERS_LBA_BEGIN = FAT_PARTITION_LBA_BEGIN + v.number_of_reserved_sectors + v.number_of_fats * v.sectors_per_fat;
     SECTORS_PER_CLUSTER = v.sectors_per_cluster;
     ROOT_DIR_FIRST_CLUSTER = v.root_directory_first_cluster;
     DIR_RECORD_SIZE = 32;
     DIR_RECORDS_PER_CLUSTER = 512 * SECTORS_PER_CLUSTER / DIR_RECORD_SIZE;
+    FAT_TABLE_ENTRIES_PER_SECTOR = 128;
+    BYTES_PER_CLUSTER = SECTORS_PER_CLUSTER * 512;
 }
 
 void fs_send_read_cluster_command(uint32_t cluster_no)
@@ -231,7 +245,22 @@ uint32_t cluster_to_lba(uint32_t cluster)
     return CLUSTERS_LBA_BEGIN + (cluster - 2) * SECTORS_PER_CLUSTER;
 }
 
-bool fs_read_dir_and_find_file(uint32_t dir_first_cluster, char *filename, File* res) {
+/* return 0 if no more clusters available */
+uint32_t fetch_next_cluster(uint32_t cluster)
+{
+    uint8_t* buf = (uint8_t*)malloc(512);
+    uint32_t lba = FAT_TABLE_LBA_BEGIN + cluster / FAT_TABLE_ENTRIES_PER_SECTOR;
+    drive_read_blocking(lba, 1, buf);
+    free(buf);
+    return ((uint32_t*)buf)[cluster % FAT_TABLE_ENTRIES_PER_SECTOR];
+}
+
+const int NO_SUCH_FILE = -1;
+const int END_OF_FILE = 0;
+
+
+bool find_file(uint32_t dir_first_cluster, char* filename, File* res)
+{
     uint32_t cluster = dir_first_cluster;
     uint8_t* buf = (uint8_t*)malloc(512 * SECTORS_PER_CLUSTER);
     // TODO: scan more clusters if file not found in first
@@ -249,7 +278,7 @@ bool fs_read_dir_and_find_file(uint32_t dir_first_cluster, char *filename, File*
             continue;
         }
         File file = parse_file_entry(file_entry);
-        klog(DEBUG, "found file \"%s\"", file.short_name);
+        klog(DEBUG, "dir contain file: \"%s\"", file.short_name);
         if (strcmp(file.short_name, filename) == 0) {
             *res = file;
             free(buf);
@@ -258,38 +287,72 @@ bool fs_read_dir_and_find_file(uint32_t dir_first_cluster, char *filename, File*
     }
     free(buf);
     return false;
+}
+
+
+uint32_t read_file(File file, size_t offset, size_t bytes, void* buf) {
+    size_t cluster_idx = 0;
+    uint32_t cluster = file.first_cluster;
+
+    size_t total_clusters = (file.file_size + BYTES_PER_CLUSTER - 1) / (BYTES_PER_CLUSTER);
+    for (int cluster_idx = 0; cluster_idx < total_clusters; cluster_idx++) {
+        size_t l = cluster_idx * BYTES_PER_CLUSTER;
+        size_t r = (cluster_idx + 1) * BYTES_PER_CLUSTER;
+
+        if (r > offset) {
+            uint8_t* tmp = (uint8_t*)malloc(SECTORS_PER_CLUSTER * 512);
+            drive_read_blocking(cluster_to_lba(cluster), SECTORS_PER_CLUSTER, tmp);
+            for (int i = offset; i < r; i++) {
+
+            }
+
+
+            free(tmp);
+        }
+        cluster = fetch_next_cluster(cluster);
+        if (cluster == NO_MORE_CLUSTERS) {
+            return END_OF_FILE;
+        }
+
+    }
 
 }
 
-int32_t fs_read_blocking(char* filepath, size_t offset, size_t count, void* write_to_buf)
+int fs_read(char* filepath, size_t offset, size_t bytes, void* buf)
 {
-    klog(DEBUG, "reading files...");
-    uint8_t* buf = (uint8_t*)malloc(512 * SECTORS_PER_CLUSTER);
+    klog(DEBUG, "reading file \"%s\"", filepath);
     uint32_t cluster = ROOT_DIR_FIRST_CLUSTER;
-    uint32_t filepath_depth = get_filepath_depth(filepath);
-    uint32_t lookup_dir_level = 0;
-
-    File source;
+    uint32_t filepath_depth = calc_filepath_depth(filepath);
+    File target;
 
     for (int i = 0; i < filepath_depth; i++) {
         char name[12] = { 0 };
-        get_level_from_filepath(filepath, lookup_dir_level, name);
-        File file;
-        bool file_found = fs_read_dir_and_find_file(cluster, name, &file);
+        copy_filename_level(filepath, i, name);
+        klog(DEBUG, "lookup of file \"%s\"", name);
+        File file = { 0 };
+        bool file_found = find_file(cluster, name, &file);
         if (!file_found) {
-            klog(DEBUG, "file %s not found", name);
-            free(buf);
-            return -1;
+            klog(DEBUG, "file was not found");
+            return NO_SUCH_FILE;
         }
         cluster = file.first_cluster;
+        klog(DEBUG, "file \"%s\" was found, first cluster=%d", name, cluster);
         if (i == filepath_depth - 1) {
-            source = file;
+            target = file;
+        } else {
+            if (!file.is_dir) {
+                return NO_SUCH_FILE;
+            }
         }
     }
-    klog(DEBUG, "read file %s size=%d", source.short_name, source.file_size);
-    free(buf);
-    return 0;
+    assert(cluster != NO_MORE_CLUSTERS, "cluster must be something else");
+    klog(DEBUG, "read file %s size=%d", target.short_name, target.file_size);
+
+
+    return -1;
 }
+
+
 
 void fs_read_nonblocking(char* filename, size_t offset, size_t count, void* buf)
 {
@@ -311,7 +374,7 @@ void fs_read_nonblocking(char* filename, size_t offset, size_t count, void* buf)
 //             r->lookup_level++;
 //             return;
 //         }
-//         char* lookup_file = get_level_from_filepath(r->filepath, r->lookup_level);
+//         char* lookup_file = copy_filename_level(r->filepath, r->lookup_level);
 
 //         File files[16];
 //         int file_index = -1;
