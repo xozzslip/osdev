@@ -126,7 +126,7 @@ int main()
     klog(INFO, "kernel was initialized successfully!");
     char* filepath = "/home/hello.txt";
     uint8_t* buf = malloc(30);
-    int bytes = fs_read(filepath, 0, 30, buf);
+    int bytes = fs_read(filepath, 0, 30, buf, false);
     klog(DEBUG, "%d", bytes);
     klog(DEBUG, "%s", buf);
 

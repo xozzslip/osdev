@@ -247,11 +247,11 @@ uint32_t cluster_to_lba(uint32_t cluster)
 }
 
 /* return 0 if no more clusters available */
-uint32_t fetch_next_cluster(uint32_t cluster)
+uint32_t fetch_next_cluster(uint32_t cluster, bool yield)
 {
     uint8_t* buf = (uint8_t*)malloc(512);
     uint32_t lba = FAT_TABLE_LBA_BEGIN + cluster / FAT_TABLE_ENTRIES_PER_SECTOR;
-    drive_read_blocking(lba, 1, buf);
+    drive_read(lba, 1, buf, yield);
     free(buf);
     return ((uint32_t*)buf)[cluster % FAT_TABLE_ENTRIES_PER_SECTOR];
 }
@@ -259,15 +259,16 @@ uint32_t fetch_next_cluster(uint32_t cluster)
 const int NO_SUCH_FILE = -1;
 const int END_OF_FILE = 0;
 
-bool find_file(uint32_t dir_first_cluster, char* filename, File* res)
+bool find_file(uint32_t dir_first_cluster, char* filename, File* res, bool yield)
 {
     uint32_t cluster = dir_first_cluster;
     uint8_t* buf = (uint8_t*)malloc(512 * SECTORS_PER_CLUSTER);
     // TODO: scan more clusters if file not found in first
-    drive_read_blocking(
+    drive_read(
         cluster_to_lba(cluster),
         SECTORS_PER_CLUSTER,
-        buf);
+        buf,
+        yield);
     for (int i = 0; i < DIR_RECORDS_PER_CLUSTER; i++) {
         uint8_t* file_entry = buf + DIR_RECORD_SIZE * i;
         if (file_entry[0] == 0) {
@@ -290,7 +291,7 @@ bool find_file(uint32_t dir_first_cluster, char* filename, File* res)
 }
 
 /* from is including, to is excluding */
-uint32_t read_file(File file, size_t from, size_t to, uint8_t* buf)
+uint32_t read_file(File file, size_t from, size_t to, uint8_t* buf, bool yield)
 {
     size_t cluster_idx = 0;
     uint32_t cluster = file.first_cluster;
@@ -305,7 +306,7 @@ uint32_t read_file(File file, size_t from, size_t to, uint8_t* buf)
         size_t r = (cluster_idx + 1) * BYTES_PER_CLUSTER;
 
         if (from >= l) {
-            drive_read_blocking(cluster_to_lba(cluster), SECTORS_PER_CLUSTER, tmp);
+            drive_read(cluster_to_lba(cluster), SECTORS_PER_CLUSTER, tmp, yield);
             for (int i = from - l; i < MIN(r, to - l); i++) {
                 *buf = tmp[i];
                 buf++;
@@ -314,14 +315,14 @@ uint32_t read_file(File file, size_t from, size_t to, uint8_t* buf)
             from = r;
         }
 
-        cluster = fetch_next_cluster(cluster);
+        cluster = fetch_next_cluster(cluster, yield);
         assert(cluster != NO_MORE_CLUSTERS, "we iterate over calculated amount of clusters, no 0xFFFFFFF are expected as next cluster");
     }
     free(tmp);
     return bytes_read;
 }
 
-int fs_read(char* filepath, size_t offset, size_t bytes, uint8_t* buf)
+int fs_read(char* filepath, size_t offset, size_t bytes, uint8_t* buf, bool yield)
 {
     klog(DEBUG, "reading file \"%s\"", filepath);
     uint32_t cluster = ROOT_DIR_FIRST_CLUSTER;
@@ -333,7 +334,7 @@ int fs_read(char* filepath, size_t offset, size_t bytes, uint8_t* buf)
         copy_filename_level(filepath, i, name);
         klog(DEBUG, "lookup of file \"%s\"", name);
         File file = { 0 };
-        bool file_found = find_file(cluster, name, &file);
+        bool file_found = find_file(cluster, name, &file, yield);
         if (!file_found) {
             klog(DEBUG, "file was not found");
             return NO_SUCH_FILE;
@@ -350,7 +351,7 @@ int fs_read(char* filepath, size_t offset, size_t bytes, uint8_t* buf)
     }
     assert(cluster != NO_MORE_CLUSTERS, "cluster must be something else");
     klog(DEBUG, "read file %s size=%d", target.short_name, target.file_size);
-    return read_file(target, offset, offset + MIN(bytes, target.file_size), buf);
+    return read_file(target, offset, offset + MIN(bytes, target.file_size), buf, yield);
 }
 
 void fs_read_nonblocking(char* filename, size_t offset, size_t count, void* buf)

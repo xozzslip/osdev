@@ -129,17 +129,25 @@ void drive_receive_sector()
     }
 }
 
-void drive_read_blocking(uint32_t lba, uint32_t sectors_count, void* buf)
+void drive_read(uint32_t lba, uint32_t sectors_count, void* buf, bool yield)
 {
     drive_send_read_command(lba, sectors_count, buf);
-
     for (int i = 0; i < sectors_count; i++) {
         while (!is_drive_ready()) {
-            continue; // busy wait
+            if (yield) {
+                continue; // TODO: implement yield
+            } else {
+                continue; // busy wait
+            }
         }
         drive_receive_sector();
     }
     assert(!current.running, "read must be finished");
+}
+
+void drive_read_blocking(uint32_t lba, uint32_t sectors_count, void* buf)
+{
+    drive_read(lba, sectors_count, buf, false);
 }
 
 void test()

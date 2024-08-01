@@ -8,6 +8,7 @@
 
 void init_drive();
 void drive_read_blocking(uint32_t lba, uint32_t sectors_count, void* buf);
+void drive_read(uint32_t lba, uint32_t sectors_count, void* buf, bool yield);
 void drive_send_read_command(uint32_t lba, uint32_t sectors_count, void* buf);
 bool is_drive_ready();
 void drive_receive_sector();
