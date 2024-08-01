@@ -1,4 +1,5 @@
 #include "../../include/string.h"
+#include "../../include/utils.h"
 #include "../libk/assert.h"
 #include "../libk/log.h"
 #include "../libk/memory.h"
@@ -258,7 +259,6 @@ uint32_t fetch_next_cluster(uint32_t cluster)
 const int NO_SUCH_FILE = -1;
 const int END_OF_FILE = 0;
 
-
 bool find_file(uint32_t dir_first_cluster, char* filename, File* res)
 {
     uint32_t cluster = dir_first_cluster;
@@ -289,36 +289,39 @@ bool find_file(uint32_t dir_first_cluster, char* filename, File* res)
     return false;
 }
 
-
-uint32_t read_file(File file, size_t offset, size_t bytes, void* buf) {
+/* from is including, to is excluding */
+uint32_t read_file(File file, size_t from, size_t to, uint8_t* buf)
+{
     size_t cluster_idx = 0;
     uint32_t cluster = file.first_cluster;
-
+    uint32_t bytes_read = 0;
     size_t total_clusters = (file.file_size + BYTES_PER_CLUSTER - 1) / (BYTES_PER_CLUSTER);
+    uint8_t* tmp = (uint8_t*)malloc(SECTORS_PER_CLUSTER * 512);
     for (int cluster_idx = 0; cluster_idx < total_clusters; cluster_idx++) {
+        if (from >= to) {
+            break;
+        }
         size_t l = cluster_idx * BYTES_PER_CLUSTER;
         size_t r = (cluster_idx + 1) * BYTES_PER_CLUSTER;
 
-        if (r > offset) {
-            uint8_t* tmp = (uint8_t*)malloc(SECTORS_PER_CLUSTER * 512);
+        if (from >= l) {
             drive_read_blocking(cluster_to_lba(cluster), SECTORS_PER_CLUSTER, tmp);
-            for (int i = offset; i < r; i++) {
-
+            for (int i = from - l; i < MIN(r, to - l); i++) {
+                *buf = tmp[i];
+                buf++;
+                bytes_read++;
             }
-
-
-            free(tmp);
+            from = r;
         }
+
         cluster = fetch_next_cluster(cluster);
-        if (cluster == NO_MORE_CLUSTERS) {
-            return END_OF_FILE;
-        }
-
+        assert(cluster != NO_MORE_CLUSTERS, "we iterate over calculated amount of clusters, no 0xFFFFFFF are expected as next cluster");
     }
-
+    free(tmp);
+    return bytes_read;
 }
 
-int fs_read(char* filepath, size_t offset, size_t bytes, void* buf)
+int fs_read(char* filepath, size_t offset, size_t bytes, uint8_t* buf)
 {
     klog(DEBUG, "reading file \"%s\"", filepath);
     uint32_t cluster = ROOT_DIR_FIRST_CLUSTER;
@@ -347,12 +350,8 @@ int fs_read(char* filepath, size_t offset, size_t bytes, void* buf)
     }
     assert(cluster != NO_MORE_CLUSTERS, "cluster must be something else");
     klog(DEBUG, "read file %s size=%d", target.short_name, target.file_size);
-
-
-    return -1;
+    return read_file(target, offset, offset + MIN(bytes, target.file_size), buf);
 }
-
-
 
 void fs_read_nonblocking(char* filename, size_t offset, size_t count, void* buf)
 {

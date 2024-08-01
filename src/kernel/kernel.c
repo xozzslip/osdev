@@ -125,7 +125,10 @@ int main()
     processes = malloc(sizeof(Process) * 10);
     klog(INFO, "kernel was initialized successfully!");
     char* filepath = "/home/hello.txt";
-    fs_read(filepath, 0, 10, NULL);
+    uint8_t* buf = malloc(30);
+    int bytes = fs_read(filepath, 0, 30, buf);
+    klog(DEBUG, "%d", bytes);
+    klog(DEBUG, "%s", buf);
 
     /*
         start first process
