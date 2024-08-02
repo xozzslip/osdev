@@ -34,7 +34,7 @@ int main()
         syscall(&kr);
         if (kr.response.recv.received > 0 && (window.width != resized.width || window.height != resized.height)) {
             if (window.buffer != NULL) {
-                free(window.buffer);
+                // free(window.buffer);
             }
             window.width = resized.width;
             window.height = resized.height;

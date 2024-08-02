@@ -50,7 +50,7 @@ def shell(command: str):
     subprocess.run(command, shell=True, check=True)
 
 
-def create_disk_image(path: str):
+def create_disk_image(path: str, userspace_paths: List[str]):
     # mformat -i $@ -F ::
 	# mmd -i $@ ::/boot
 	# mcopy -i $@ $< ::/boot
@@ -59,12 +59,16 @@ def create_disk_image(path: str):
         hello_path = os.path.join(temp_dir, "hello.txt")
 
         with open(os.path.join(temp_dir, "hello.txt"), "w") as f:
-            f.write("Henlo Word!!\n")
+            f.write("Henlo World!!\n")
 
         shell(f"dd if=/dev/zero of={fat32_path} bs=1M count=39 status=none")
         shell(f"mformat -c 2 -i {fat32_path} -F ::")
         shell(f"mmd -i {fat32_path} ::/home")
+        shell(f"mmd -i {fat32_path} ::/usr")
         shell(f"mcopy -i {fat32_path} {hello_path} ::/home")
+        for path in userspace_paths:
+            filename = os.path.basename(path)
+            shell(f"mcopy -i {fat32_path} {filename} ::/usr")
 
         with open(fat32_path, "rb") as f:
             fat32_partition_bytes = f.read()

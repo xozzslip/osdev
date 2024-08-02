@@ -1,15 +1,16 @@
-CC = i386-elf-gcc
-LD = i386-elf-ld
-GDB = i386-elf-gdb
-QEMU = qemu-system-i386 -m 128M -drive format=raw,file=build/disk.img
+export CC = i386-elf-gcc
+export LD = i386-elf-ld
+export GDB = i386-elf-gdb
+export QEMU = qemu-system-i386 -m 128M -drive format=raw,file=build/disk.img
+export CFLAGS = -Werror -O0 -g
 
 # Create all necessary folders in build dir
 $(shell find src -type d -exec sh -c 'mkdir -p build/$$(echo "{}" | sed "s|^src||")' \;)
 
 # Source files
-KERNEL_H = $(shell find src/kernel -type f -name '*.h')
-KERNEL_H += $(shell find src/include -type f -name '*.h')
+export COMMON_H = $(shell find src/include -type f -name '*.h')
 
+KERNEL_H = $(shell find src/kernel -type f -name '*.h')
 KERNEL_C = $(shell find src/kernel -type f -name '*.c')
 KERNEL_ASM = $(shell find src/kernel -type f -name '*.asm')
 KERNEL_OBJ = $(patsubst src/%.c,build/%.o,$(KERNEL_C))
@@ -19,8 +20,11 @@ KERNEL_LD = src/kernel/linker.ld
 BOOT_ASM = $(shell find src/boot -type f -name '*.asm')
 BOOT_OBJ = $(patsubst src/%.c,build/%.o,$(BOOT_ASM))
 
-USERSPACE_C = $(shell find src/kernel -type f -name '*.c')
+USERSPACE_H = $(shell find src/usr -type f -name '*.h')
+USERSPACE_C = $(shell find src/usr -type f -name '*.c')
 USERSPACE_OBJ = $(patsubst src/%.c,build/%.o,$(USERSPACE_C))
+USERSPACE_MAINS_C = $(shell find src/usr -type f -name 'main.c')
+USERSPACE_MAINS_ELF = $(patsubst src/%.c,build/%.elf,$(USERSPACE_MAINS_C))
 
 # Run 32 bit machine with 128M of RAM
 .PHONY: run
@@ -38,7 +42,7 @@ test: build/disk.img
 		kill -9 $$DAEMON_PID; \
 	)
 
-build/disk.img: build/boot/boot.bin build/kernel.bin scripts/flush_os_to_disk.py
+build/disk.img: build/boot/boot.bin build/kernel.bin scripts/flush_os_to_disk.py $(USERSPACE_ELF)
 	python scripts/flush_os_to_disk.py build/disk.img build/boot/boot.bin build/kernel.bin
 
 .PHONY: build
@@ -51,8 +55,14 @@ disasm: build/kernel.elf
 build/kernel.bin: $(KERNEL_LD) $(KERNEL_OBJ)
 	$(LD) $(KERNEL_OBJ) -o $@ -T $(KERNEL_LD) --oformat binary
 
-build/%.o: src/%.c $(KERNEL_H)
-	$(CC) -Werror -O0 -g -ffreestanding -c $< -o $@
+build/kernel/%.o: src/kernel/%.c $(KERNEL_H) $(COMMON_H)
+	$(CC) $(CFLAGS) -ffreestanding -c $< -o $@
+
+build/usr/%.o: src/usr/%.c $(USERSPACE_H) $(COMMON_H)
+	$(CC) $(CFLAGS) -ffreestanding -c $< -o $@
+
+build/usr/%.elf: src/usr/%.c $(USERSPACE_OBJ)
+	echo $(USERSPACE_OBJ)
 
 build/%.o: src/%.asm
 	nasm -f elf $< -o $@
