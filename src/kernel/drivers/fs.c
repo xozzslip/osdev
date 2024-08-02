@@ -297,7 +297,7 @@ uint32_t read_file(File file, size_t from, size_t to, uint8_t* buf, bool yield)
     uint32_t cluster = file.first_cluster;
     uint32_t bytes_read = 0;
     size_t total_clusters = (file.file_size + BYTES_PER_CLUSTER - 1) / (BYTES_PER_CLUSTER);
-    uint8_t* tmp = (uint8_t*)malloc(SECTORS_PER_CLUSTER * 512);
+    uint8_t* tmp = (uint8_t*)malloc(BYTES_PER_CLUSTER);
     for (int cluster_idx = 0; cluster_idx < total_clusters; cluster_idx++) {
         if (from >= to) {
             break;
@@ -307,7 +307,7 @@ uint32_t read_file(File file, size_t from, size_t to, uint8_t* buf, bool yield)
 
         if (from >= l) {
             drive_read(cluster_to_lba(cluster), SECTORS_PER_CLUSTER, tmp, yield);
-            for (int i = from - l; i < MIN(r, to - l); i++) {
+            for (int i = from - l; i < MIN(r - l, to - l); i++) {
                 *buf = tmp[i];
                 buf++;
                 bytes_read++;

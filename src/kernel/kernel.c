@@ -32,12 +32,12 @@ uint32_t current_timeslice;
 void timer_interrupt(registers_t* registers)
 {
     current_timeslice++;
-    // uint8_t* vga = (uint8_t*)VGA_TEXT_ADDRESS;
-    // if (processes[0].window.buffer != NULL) {
-    //     for (int j = 0; j < 25 * 80 * 2; j++) {
-    //         vga[j] = processes[0].window.buffer[j];
-    //     }
-    // }
+    uint8_t* vga = (uint8_t*)VGA_TEXT_ADDRESS;
+    if (processes[0].window.buffer != NULL) {
+        for (int j = 0; j < 25 * 80 * 2; j++) {
+            vga[j] = processes[0].window.buffer[j];
+        }
+    }
     return;
 }
 
@@ -72,8 +72,10 @@ void switch_task(registers_t* registers)
 void syscall_handler(registers_t* registers)
 {
     KR* kr = (KR*)registers->eax;
+    // klog(DEBUG, "syscall occured type %d", kr->type);
     switch (kr->type) {
     case KR_RECV:
+        // klog(DEBUG, "XUI! size=%d (0x%x) \"%s\"", kr->request.recv.size, kr->request.recv.size, kr->request.recv.path);
         if (strcmp(kr->request.recv.path, "/proc/window/resized") == 0) {
             WindowResizedEvent event = {
                 .width = 80,
@@ -81,14 +83,14 @@ void syscall_handler(registers_t* registers)
             };
             memcpy(kr->request.recv.buf, &event, sizeof(event));
             kr->response.recv.error = 0;
-            kr->response.recv.received = sizeof(WindowResizedEvent);
-        }
+            kr->response.recv.received = sizeof(WindowResizedEvent);        }
         break;
     case KR_SEND:
         if (strcmp(kr->request.send.path, "/proc/window/update") == 0) {
             WindowBuffer window = { 0 };
             memcpy(&window, kr->request.send.buf, sizeof(window));
             processes[0].window = window;
+            klog(DEBUG, "window updated!");
         }
         break;
     case KR_READ:
@@ -96,6 +98,10 @@ void syscall_handler(registers_t* registers)
         void* buf = malloc(size);
         // enqueue_drive_read(buf, size, 0);
         processes[0].suspended = true;
+        break;
+    case KR_MALLOC:
+        kr->response.malloc.buf = malloc(kr->request.malloc.size);
+        kr->response.malloc.error = 0;
         break;
     default:
         break;
@@ -124,12 +130,22 @@ int main()
 
     processes = malloc(sizeof(Process) * 10);
     klog(INFO, "kernel was initialized successfully!");
-    char* filepath = "/home/hello.txt";
-    uint8_t* buf = malloc(30);
-    int bytes = fs_read(filepath, 0, 30, buf, false);
+    char* filepath = "/usr/screen.elf";
+    uint8_t* buf = malloc(10000);
+    int bytes = fs_read(filepath, 0, 10000, buf, false);
     klog(DEBUG, "%d", bytes);
-    klog(DEBUG, "%s", buf);
+    klog(DEBUG, "0x%x", buf);
+    uint32_t entry = *((uint32_t*)(buf + 24));
+    klog(DEBUG, "0x%x", entry);
 
+
+    asm volatile ("pushf");
+    asm volatile ("push $0x0008");
+    asm volatile ("push %0" :: "r" ((uint32_t)buf + entry));
+    asm volatile ("iret":::"memory");
+
+    klog(FATAL, "userspace program exited?");
+    panic();
     /*
         start first process
     */

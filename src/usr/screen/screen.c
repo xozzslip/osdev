@@ -1,22 +1,21 @@
+#include "../../include/process.h"
+#include "../../include/syscall.h"
+#include "../libc/memory.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "../../include/process.h"
-#include "../../include/syscall.h"
-#include "../libc/memory.h"
 
-void dummy() {
+void dummy()
+{
     dummy();
 }
 
-
-int main()
+int _start()
 {
     uint8_t x = 0;
     uint8_t* first_ptr = 0;
     uint8_t* last_ptr = 0;
-    void * some_buf = malloc(100);
 
     WindowResizedEvent resized = {0};
     WindowBuffer window = {0};
@@ -65,16 +64,6 @@ int main()
             }
         }
         x++;
-
-        kr = (KR){
-            .type = KR_READ,
-            .request.read = {
-                .path = "/home/hello.txt",
-                .buf = some_buf,
-                .size = 10,
-            },
-        };
-        syscall(&kr);
 
         for (int i = 0; i < 10000000;) {
             i++;

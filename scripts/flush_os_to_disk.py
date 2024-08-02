@@ -66,9 +66,9 @@ def create_disk_image(path: str, userspace_paths: List[str]):
         shell(f"mmd -i {fat32_path} ::/home")
         shell(f"mmd -i {fat32_path} ::/usr")
         shell(f"mcopy -i {fat32_path} {hello_path} ::/home")
-        for path in userspace_paths:
-            filename = os.path.basename(path)
-            shell(f"mcopy -i {fat32_path} {filename} ::/usr")
+        for userspace_path in userspace_paths:
+            shell(f"mcopy -i {fat32_path} {userspace_path} ::/usr")
+
 
         with open(fat32_path, "rb") as f:
             fat32_partition_bytes = f.read()
@@ -96,15 +96,18 @@ if __name__ == "__main__":
     parser.add_argument("disk.img", help="Path to disk image")
     parser.add_argument("boot.bin", help="Path to executable that will be written to MBR")
     parser.add_argument("kernel.bin", help="Path to kernel executable")
+    parser.add_argument("userspace.elf", help="Path to first userspace program")
     args: argparse.Namespace = parser.parse_args()
     disk_image_path: str = getattr(args, "disk.img")
     boot_path: str = getattr(args, "boot.bin")
     kernel_path: str = getattr(args, "kernel.bin")
+    userspace_path: str = getattr(args, "userspace.elf")
+
     recreate: bool = getattr(args, "recreate")
 
     if recreate or not os.path.exists(disk_image_path):
         print("Creating disk image")
-        create_disk_image(disk_image_path)
+        create_disk_image(disk_image_path, [userspace_path])
 
     with open(disk_image_path, "rb") as f:
         mbr = f.read(512)
