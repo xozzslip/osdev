@@ -1,5 +1,6 @@
 set confirm off
 set pagination off
+set disassembly-flavor intel
 layout split
 break kernel.c:133
 continue

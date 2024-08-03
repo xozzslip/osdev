@@ -2,7 +2,6 @@ CC = i386-elf-gcc
 LD = i386-elf-ld
 GDB = i386-elf-gdb
 QEMU = qemu-system-i386 -m 128M -drive format=raw,file=build/disk.img
-CFLAGS = -Werror -g -O0
 
 # Create all necessary folders in build dir
 $(shell find src -type d -exec sh -c 'mkdir -p build/$$(echo "{}" | sed "s|^src||")' \;)
@@ -23,8 +22,6 @@ BOOT_OBJ = $(patsubst src/%.c,build/%.o,$(BOOT_ASM))
 USERSPACE_H = $(shell find src/usr -type f -name '*.h')
 USERSPACE_C = $(shell find src/usr -type f -name '*.c')
 USERSPACE_OBJ = $(patsubst src/%.c,build/%.o,$(USERSPACE_C))
-# USERSPACE_MAINS_C = $(shell find src/usr -type f -name 'main.c')
-# USERSPACE_MAINS_ELF = $(patsubst src/%.c,build/%.elf,$(USERSPACE_MAINS_C))
 
 # Run 32 bit machine with 128M of RAM
 .PHONY: run
@@ -56,7 +53,7 @@ build/kernel.bin: $(KERNEL_LD) $(KERNEL_OBJ)
 	$(LD) $(KERNEL_OBJ) -o $@ -T $(KERNEL_LD) --oformat binary
 
 build/%.o: src/%.c $(KERNEL_H) $(COMMON_H)
-	$(CC) $(CFLAGS) -ffreestanding -c $< -o $@
+	$(CC) -Werror -g -O0 -ffreestanding -c $< -o $@
 
 build/%.o: src/%.asm
 	nasm -f elf $< -o $@
@@ -65,11 +62,10 @@ build/%.bin: src/%.asm
 	nasm -f bin $< -o $@
 
 build/usr/%.o: src/usr/%.c $(USERSPACE_H) $(COMMON_H)
-	$(CC) $(CFLAGS) -fPIE -ffreestanding -c $< -o $@
+	$(CC) -Werror -O0 -ffreestanding -c $< -o $@
 
 build/usr/screen.elf: $(USERSPACE_OBJ)
-	$(LD) -pie $(wildcard build/usr/screen/*.o) $(wildcard build/usr/libc/*.o) -o $@
-
+	$(LD) -shared $(wildcard build/usr/screen/*.o) $(wildcard build/usr/libc/*.o) -o $@
 
 .PHONY: clean
 clean:

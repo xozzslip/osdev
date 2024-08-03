@@ -1,7 +1,9 @@
 *.bin
 *.elf
 *.o
+*.so
 *.pyc
 __pycache__
 *.out
+a.c
 build/
